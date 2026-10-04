@@ -1,10 +1,10 @@
 import { expect, test } from "@playwright/test";
 
 test("add to cart, change qty, free-shipping bar, persistence", async ({ page }) => {
-  await page.goto("/product/benguet-arabica"); // ₱480
+  await page.goto("/product/classic-cinnamon-rolls"); // ₱480
   await page.getByRole("button", { name: "Add to cart" }).click();
   const drawer = page.getByRole("dialog");
-  await expect(drawer).toContainText("Benguet Arabica");
+  await expect(drawer).toContainText("Classic Cinnamon Rolls");
   await expect(drawer).toContainText("₱1,020 away from free shipping");
   await drawer.getByRole("button", { name: "Increase quantity" }).click();
   await expect(drawer).toContainText("₱540 away from free shipping");
@@ -13,7 +13,7 @@ test("add to cart, change qty, free-shipping bar, persistence", async ({ page })
 });
 
 test("free-shipping message appears at the threshold", async ({ page }) => {
-  await page.goto("/product/mt-apo-natural"); // ₱650 x 3 = ₱1,950
+  await page.goto("/product/blueberry-cheesecake"); // ₱650 x 3 = ₱1,950
   await page.getByRole("button", { name: "Increase quantity" }).click();
   await page.getByRole("button", { name: "Increase quantity" }).click();
   await page.getByRole("button", { name: "Add to cart" }).click();
@@ -21,7 +21,7 @@ test("free-shipping message appears at the threshold", async ({ page }) => {
 });
 
 test("removing the last item shows the empty cart", async ({ page }) => {
-  await page.goto("/product/batangas-barako");
+  await page.goto("/product/sprinkle-donuts");
   await page.getByRole("button", { name: "Add to cart" }).click();
   const drawer = page.getByRole("dialog");
   await drawer.getByRole("button", { name: /Remove/ }).click();
@@ -48,14 +48,14 @@ test("corrupt or stale cart storage does not crash the site", async ({ page }) =
 });
 
 test("adding a second product keeps both in the cart", async ({ page }) => {
-  await page.goto("/product/benguet-arabica");
+  await page.goto("/product/classic-cinnamon-rolls");
   await page.getByRole("button", { name: "Add to cart" }).click();
-  await expect(page.getByRole("dialog")).toContainText("Benguet Arabica");
-  await page.goto("/product/wild-forest-honey");
+  await expect(page.getByRole("dialog")).toContainText("Classic Cinnamon Rolls");
+  await page.goto("/product/chocolate-cupcakes");
   await page.getByRole("button", { name: "Add to cart" }).click();
   const drawer = page.getByRole("dialog");
-  await expect(drawer).toContainText("Wild Forest Honey");
-  await expect(drawer).toContainText("Benguet Arabica");
+  await expect(drawer).toContainText("Chocolate Cupcakes");
+  await expect(drawer).toContainText("Classic Cinnamon Rolls");
   await expect(drawer).toContainText("₱930");
   await expect(drawer).not.toContainText("no longer available");
 });

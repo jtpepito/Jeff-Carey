@@ -33,7 +33,7 @@ export function CartDrawer() {
           {lines.length === 0 ? (
             <div className="py-14 text-center">
               <p className="font-heading text-2xl">Your cart is empty</p>
-              <p className="mt-2 text-[15px] text-muted-foreground">Good coffee is a few taps away.</p>
+              <p className="mt-2 text-[15px] text-muted-foreground">Something warm from the oven is a few taps away.</p>
               <Link href="/shop" onClick={close} className="btn btn-primary mt-6">
                 Browse the shop
               </Link>

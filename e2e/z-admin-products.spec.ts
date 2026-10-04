@@ -9,7 +9,7 @@ test("create, see on storefront, edit, deactivate", async ({ page }) => {
   await page.getByRole("link", { name: "New product" }).click();
   await page.getByLabel("Name", { exact: true }).fill("Kapeng Test");
   await expect(page.getByLabel("Slug")).toHaveValue("kapeng-test");
-  await page.getByLabel("Category").fill("Coffee");
+  await page.getByLabel("Category").fill("Cookies");
   await page.getByLabel("Price", { exact: true }).fill("abc");
   await page.getByLabel("Variant 1 name").fill("250g");
   await page.getByLabel("Variant 1 stock").fill("3");
@@ -41,8 +41,8 @@ test("duplicate slug shows a field error", async ({ page }) => {
   await signIn(page);
   await page.goto("/admin/products/new");
   await page.getByLabel("Name", { exact: true }).fill("Copy");
-  await page.getByLabel("Slug").fill("benguet-arabica");
-  await page.getByLabel("Category").fill("Coffee");
+  await page.getByLabel("Slug").fill("classic-cinnamon-rolls");
+  await page.getByLabel("Category").fill("Cookies");
   await page.getByLabel("Price", { exact: true }).fill("100");
   await page.getByLabel("Variant 1 name").fill("A");
   await page.getByLabel("Variant 1 stock").fill("1");
@@ -53,9 +53,9 @@ test("duplicate slug shows a field error", async ({ page }) => {
 test("deleting a product with orders deactivates it instead", async ({ page }) => {
   await signIn(page);
   await page.goto("/admin/products");
-  await page.getByRole("link", { name: /Benguet Arabica/ }).click();
+  await page.getByRole("link", { name: /Classic Cinnamon Rolls/ }).click();
   await page.getByRole("button", { name: "Delete product" }).click();
   await page.getByRole("button", { name: "Yes, delete" }).click();
   await expect(page.getByText(/has past orders, so it was deactivated/i)).toBeVisible();
-  expect((await page.goto("/product/benguet-arabica"))!.status()).toBe(404);
+  expect((await page.goto("/product/classic-cinnamon-rolls"))!.status()).toBe(404);
 });

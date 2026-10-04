@@ -4,7 +4,7 @@ An e-commerce starter for a Philippine direct-to-consumer brand: a mobile-first 
 simple order console. Checkout takes cash on delivery or a GCash reference number. There is no card
 gateway.
 
-The demo brand is Jef&Carey (coffee, tablea and pantry goods). Everything brand-specific is in
+The brand is Jef&Carey, a small-batch bakery (rolls and donuts, cookies, cakes). The products, prices and copy are sample data. Everything brand-specific is in
 three places, so the starter can be re-skinned:
 
 - `lib/brand.ts` — name, order-code prefix, copy, FAQs

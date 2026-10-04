@@ -10,7 +10,7 @@ beforeEach(freshDb);
 test("seed creates 12 products in 3 categories and 15 mixed-status orders", () => {
   seed(new Date("2026-10-04T03:00:00Z"));
   expect(listProducts()).toHaveLength(12);
-  expect(listCategories().sort()).toEqual(["Coffee", "Pantry", "Tablea & Cacao"]);
+  expect(listCategories().sort()).toEqual(["Cakes", "Cookies", "Rolls & Donuts"]);
   expect(listProducts().filter((p) => p.featured)).toHaveLength(4);
   const orders = listOrders();
   expect(orders).toHaveLength(15);

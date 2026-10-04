@@ -31,7 +31,7 @@ export default function HomePage() {
     <>
       <section className="container-page grid gap-8 pt-6 pb-4 md:grid-cols-2 md:items-center md:gap-12 md:pt-12">
         <div className="md:order-1">
-          <p className="eyebrow">Small-batch · Philippine-grown</p>
+          <p className="eyebrow">{brand.heroEyebrow}</p>
           <h1 className="mt-3 text-[2.5rem] leading-[1.05] sm:text-6xl">{brand.heroHeadline}</h1>
           <p className="mt-4 max-w-md text-[17px] leading-relaxed text-muted-foreground">{brand.promise}</p>
           <div className="mt-6 hidden md:block">
@@ -104,11 +104,11 @@ export default function HomePage() {
       <section className="mt-16 bg-primary text-primary-foreground" aria-labelledby="story">
         <div className="container-page grid gap-8 py-14 md:grid-cols-2 md:items-center md:gap-14">
           <div className="relative aspect-video overflow-hidden rounded-3xl bg-black/20">
-            <ProductImage src={brand.storyImage} alt="Coffee being prepared" sizes="(min-width: 768px) 50vw, 100vw" />
+            <ProductImage src={brand.storyImage} alt={brand.storyImageAlt} sizes="(min-width: 768px) 50vw, 100vw" />
           </div>
           <div>
             <p className="text-xs font-semibold tracking-[0.18em] text-[#e6cf7a] uppercase">Our story</p>
-            <h2 id="story" className="mt-3 text-3xl leading-tight sm:text-4xl">Fourteen farms. No middlemen.</h2>
+            <h2 id="story" className="mt-3 text-3xl leading-tight sm:text-4xl">{brand.storyHeadline}</h2>
             <div className="mt-4 space-y-3 text-[16px] leading-relaxed text-primary-foreground/85">
               {brand.story.map((p) => (
                 <p key={p}>{p}</p>

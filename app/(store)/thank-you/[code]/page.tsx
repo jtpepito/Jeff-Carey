@@ -10,12 +10,12 @@ export const metadata: Metadata = { title: "Thank you", robots: { index: false }
 const NEXT_STEPS = {
   cod: [
     "We'll text you within a day to confirm your order.",
-    "We pack it within 2 business days and hand it to our courier.",
+    "We bake and pack it within 2 business days and hand it to our courier.",
     "Pay the rider in cash when it arrives. Having the exact amount ready helps.",
   ],
   gcash: [
     "We verify your GCash reference within a day and text you once it's confirmed.",
-    "We pack your order within 2 business days and hand it to our courier.",
+    "We bake and pack your order within 2 business days and hand it to our courier.",
     "Nothing more to pay. The rider just hands over your parcel.",
   ],
 };
