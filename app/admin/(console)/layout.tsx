@@ -3,6 +3,7 @@ import Link from "next/link";
 import { logout } from "@/actions/auth";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { Toaster } from "@/components/ui/sonner";
+import { Logo } from "@/components/logo";
 import { brand } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export default function ConsoleLayout({ children }: { children: React.ReactNode 
       <header className="border-b border-border bg-card">
         <div className="container-page flex flex-col gap-2 py-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center justify-between gap-4">
-            <p className="font-heading text-xl font-semibold">{brand.name} <span className="font-sans text-sm font-normal text-muted-foreground">admin</span></p>
+            <p className="flex items-center gap-2 font-heading text-xl font-semibold"><Logo size={36} />{brand.name} <span className="font-sans text-sm font-normal text-muted-foreground">admin</span></p>
             <div className="flex items-center gap-1 sm:hidden">
               <ConsoleLinks />
             </div>

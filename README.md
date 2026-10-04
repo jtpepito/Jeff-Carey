@@ -8,6 +8,7 @@ The brand is Jef&Carey, a small-batch bakery (rolls and donuts, cookies, cakes).
 three places, so the starter can be re-skinned:
 
 - `lib/brand.ts` — name, order-code prefix, copy, FAQs
+- `public/logo.jpg`, `public/logo-160.webp`, `app/icon.png`, `app/apple-icon.png` — the logo and browser icons
 - `lib/seed-data.ts` — demo products and orders
 - `app/globals.css` — colour tokens; `app/layout.tsx` — heading font
 

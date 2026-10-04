@@ -1,11 +1,13 @@
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 import { brand } from "@/lib/brand";
 
 export function Header({ cart }: { cart?: React.ReactNode }) {
   return (
     <header className="sticky top-0 z-40 border-b border-border/70 bg-background/95 backdrop-blur">
       <div className="container-page flex h-16 items-center justify-between">
-        <Link href="/" className="font-heading text-[22px] font-semibold tracking-tight">
+        <Link href="/" className="flex items-center gap-2.5 font-heading text-[22px] font-semibold tracking-tight">
+          <Logo size={44} />
           {brand.name}
         </Link>
         <nav className="flex items-center gap-1">

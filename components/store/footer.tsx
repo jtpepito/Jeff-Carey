@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 import { brand } from "@/lib/brand";
 
 export function Footer() {
@@ -6,7 +7,8 @@ export function Footer() {
     <footer className="mt-20 bg-olive-deep text-[#f3eadb]">
       <div className="container-page grid gap-12 py-14 md:grid-cols-[1fr_1.4fr]">
         <div>
-          <p className="font-heading text-2xl font-semibold">{brand.name}</p>
+          <Logo size={96} />
+          <p className="mt-4 font-heading text-2xl font-semibold">{brand.name}</p>
           <p className="mt-3 max-w-sm text-[15px] text-[#d9cbb6]">{brand.tagline}</p>
           <p className="mt-6 text-[15px] text-[#d9cbb6]">{brand.promise}</p>
           <Link href="/shop" className="btn btn-light mt-6">
