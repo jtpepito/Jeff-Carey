@@ -9,6 +9,8 @@ export type OrderInput = {
   customerName: string; mobile: string; province: string; city: string; address: string;
   notes?: string; paymentMethod: "cod" | "gcash"; gcashRef?: string;
   lines: { variantId: number; qty: number }[];
+  /** Made up once by the checkout page. A retry with the same id returns the first order. */
+  requestId?: string;
 };
 export type PlaceResult = { ok: true; code: string } | { ok: false; error: string; field: string };
 
@@ -47,6 +49,12 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
 
   try {
     return tx((db) => {
+      const requestId = input.requestId?.trim() || null;
+      if (requestId) {
+        // The shopper's first attempt may have succeeded even though the reply never reached them.
+        const earlier = db.prepare("SELECT code FROM orders WHERE request_id = ?").get(requestId) as { code: string } | undefined;
+        if (earlier) return { ok: true as const, code: earlier.code };
+      }
       const find = db.prepare(
         `SELECT v.name AS vname, p.id AS pid, p.name AS pname, p.price, p.active
          FROM variants v JOIN products p ON p.id = v.product_id WHERE v.id = ?`,
@@ -72,13 +80,13 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
       const orderId = db
         .prepare(
           `INSERT INTO orders (code, customer_name, mobile, province, city, address, notes, payment_method,
-             gcash_ref, shipping_fee, subtotal, total, status, created_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?)`,
+             gcash_ref, shipping_fee, subtotal, total, status, created_at, request_id)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?)`,
         )
         .run(
           code, customerName, mobile, input.province, input.city, address, input.notes?.trim() ?? "",
           input.paymentMethod, input.paymentMethod === "gcash" ? gcashRef : null,
-          fee, subtotal, subtotal + fee, now.toISOString(),
+          fee, subtotal, subtotal + fee, now.toISOString(), requestId,
         ).lastInsertRowid;
 
       const addItem = db.prepare(

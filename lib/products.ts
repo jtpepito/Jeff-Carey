@@ -7,7 +7,8 @@ export type Product = {
   variants: Variant[];
 };
 export type ProductInput = Omit<Product, "id" | "variants"> & {
-  variants: { id?: number; name: string; stock: number; sku: string }[];
+  /** stockWas is the stock the edit form loaded. With it, a save applies only the difference, so units sold meanwhile are not put back. */
+  variants: { id?: number; name: string; stock: number; sku: string; stockWas?: number }[];
 };
 export type SaveResult = { ok: true; id: number } | { ok: false; error: string; field: string };
 export type CartLineInfo = {
@@ -146,9 +147,13 @@ export function updateProduct(id: number, input: ProductInput): SaveResult {
     for (const vid of existing) if (!kept.has(vid)) del.run(vid);
 
     const upd = db.prepare("UPDATE variants SET name = ?, stock = ?, sku = ? WHERE id = ?");
+    const updByDiff = db.prepare("UPDATE variants SET name = ?, stock = MAX(0, stock + ?), sku = ? WHERE id = ?");
     const add = db.prepare("INSERT INTO variants (product_id, name, stock, sku) VALUES (?, ?, ?, ?)");
     for (const v of input.variants) {
-      if (v.id != null && kept.has(v.id)) upd.run(v.name.trim(), v.stock, v.sku?.trim() ?? "", v.id);
+      if (v.id != null && kept.has(v.id)) {
+        if (Number.isInteger(v.stockWas)) updByDiff.run(v.name.trim(), v.stock - v.stockWas!, v.sku?.trim() ?? "", v.id);
+        else upd.run(v.name.trim(), v.stock, v.sku?.trim() ?? "", v.id);
+      }
       else add.run(id, v.name.trim(), v.stock, v.sku?.trim() ?? "");
     }
     return { ok: true as const, id };

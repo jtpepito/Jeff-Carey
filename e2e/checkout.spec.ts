@@ -27,6 +27,9 @@ test("COD order: no reference field, correct totals, thank-you page", async ({ p
   await expect(page).toHaveURL(/\/thank-you\/BL-\d{4}-\d{4}/);
   await expect(page.getByText(/pay the rider/i)).toBeVisible();
   await expect(page.getByText("Batangas Barako — 250g")).toBeVisible();
+  // Order codes are guessable, so the receipt must not show who ordered or where it is going.
+  await expect(page.locator("main")).not.toContainText("Mabini");
+  await expect(page.locator("main")).not.toContainText("Ana");
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Open cart" })).not.toContainText("1");
 });
@@ -42,6 +45,18 @@ test("GCash order requires a reference", async ({ page }) => {
   await page.getByRole("button", { name: "Place order" }).click();
   await expect(page).toHaveURL(/\/thank-you\//);
   await expect(page.getByText(/verify your GCash reference/i)).toBeVisible();
+  await expect(page.locator("main")).not.toContainText("1234567890123");
+});
+
+test("a dropped connection shows a retry message, and retrying places one order", async ({ page }) => {
+  await addAndCheckout(page, "spiced-coconut-vinegar");
+  await fillContact(page);
+  await page.route("**/checkout", (route) => (route.request().method() === "POST" ? route.abort() : route.continue()));
+  await page.getByRole("button", { name: "Place order" }).click();
+  await expect(page.getByText(/couldn't reach the shop/i)).toBeVisible();
+  await page.unroute("**/checkout");
+  await page.getByRole("button", { name: "Place order" }).click();
+  await expect(page).toHaveURL(/\/thank-you\/BL-\d{4}-\d{4}/);
 });
 
 test("contact errors show beside the field", async ({ page }) => {

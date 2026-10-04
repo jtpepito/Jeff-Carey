@@ -26,7 +26,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
           price: pesoInputValue(product.price),
           compareAt: product.compareAt ? pesoInputValue(product.compareAt) : "",
           images: product.images.join("\n"), featured: product.featured, active: product.active,
-          variants: product.variants.map((v) => ({ id: v.id, name: v.name, sku: v.sku, stock: String(v.stock) })),
+          variants: product.variants.map((v) => ({ id: v.id, name: v.name, sku: v.sku, stock: String(v.stock), stockWas: v.stock })),
         }}
       />
     </>

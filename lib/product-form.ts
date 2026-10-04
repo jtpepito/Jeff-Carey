@@ -6,7 +6,7 @@ export type ProductFormValues = {
   name: string; slug: string; category: string; description: string; howToUse: string;
   price: string; compareAt: string; images: string; // images: one URL per line
   featured: boolean; active: boolean;
-  variants: { id?: number; name: string; sku: string; stock: string }[];
+  variants: { id?: number; name: string; sku: string; stock: string; stockWas?: number }[];
 };
 
 type Parsed = { ok: true; input: ProductInput } | { ok: false; field: string; error: string };
@@ -38,7 +38,7 @@ export function toProductInput(v: ProductFormValues): Parsed {
   for (const row of Array.isArray(v.variants) ? v.variants : []) {
     if (!/^\d+$/.test((row.stock ?? "").trim()))
       return { ok: false, field: "variants", error: "Stock must be a whole number, 0 or more." };
-    variants.push({ id: row.id, name: row.name ?? "", sku: row.sku ?? "", stock: Number(row.stock.trim()) });
+    variants.push({ id: row.id, name: row.name ?? "", sku: row.sku ?? "", stock: Number(row.stock.trim()), stockWas: row.stockWas });
   }
 
   return {

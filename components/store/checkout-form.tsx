@@ -26,6 +26,8 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
   const [placed, setPlaced] = useState(false);
   const [pending, startTransition] = useTransition();
   const submitting = useRef(false);
+  // One id per visit to this form, so a retry after a dropped connection can't create a second order.
+  const [requestId] = useState(() => crypto.randomUUID());
 
   // Prices or stock may have changed since the cart was filled.
   useEffect(() => {
@@ -69,11 +71,19 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
     const form = new FormData(e.currentTarget);
     const text = (name: string) => String(form.get(name) ?? "");
     startTransition(async () => {
-      const result = await submitOrder({
+      let result: Awaited<ReturnType<typeof submitOrder>>;
+      try {
+        result = await submitOrder({
+          requestId,
         customerName: text("customerName"), mobile: text("mobile"), province, city, address: text("address"),
         notes: text("notes"), paymentMethod: payment, gcashRef: payment === "gcash" ? text("gcashRef") : undefined,
         lines: lines.map((l) => ({ variantId: l.variantId, qty: l.qty })),
-      });
+        });
+      } catch {
+        submitting.current = false;
+        setError({ field: "network", message: "We couldn't reach the shop. Check your connection and tap Place order again. Your order won't be placed twice." });
+        return;
+      }
       if (result.ok) {
         setPlaced(true);
         router.push(`/thank-you/${result.code}`);
@@ -201,6 +211,7 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
 
         {/* Stays at the bottom of the screen on phones so the order can be placed with one thumb. */}
         <div className={cn("sticky bottom-0 z-10 -mx-4 mt-6 border-t border-border bg-background/95 px-4 py-3 backdrop-blur", "md:static md:mx-0 md:border-0 md:bg-transparent md:p-0")}>
+          {error?.field === "network" ? <p className="field-error mb-2 text-center" role="alert">{error.message}</p> : null}
           <button type="submit" disabled={pending} className="btn btn-primary w-full">
             {pending ? "Placing order…" : "Place order"}
           </button>

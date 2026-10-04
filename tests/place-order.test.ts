@@ -87,3 +87,13 @@ test("mobile with spaces or dashes is normalised", () => {
   placeOrder(order({ mobile: "0917 123-4567" }), NOW);
   expect((getDb().prepare("SELECT mobile m FROM orders").get() as { m: string }).m).toBe("09171234567");
 });
+
+test("retrying with the same request id returns the first order instead of making a second", () => {
+  const input = order({ requestId: "req-abc-123", lines: [{ variantId: ids.v250, qty: 2 }] });
+  const first = placeOrder(input, NOW);
+  const again = placeOrder(input, NOW);
+  expect(first).toEqual({ ok: true, code: "BL-2610-0001" });
+  expect(again).toEqual(first);
+  expect([orderCount(), stock(ids.v250)]).toEqual([1, 3]);
+  expect(placeOrder(order({ requestId: "req-other" }), NOW)).toEqual({ ok: true, code: "BL-2610-0002" });
+});

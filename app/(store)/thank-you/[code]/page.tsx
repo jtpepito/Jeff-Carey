@@ -4,7 +4,6 @@ import { notFound } from "next/navigation";
 import { ClearCart } from "@/components/store/clear-cart";
 import { formatPeso } from "@/lib/money";
 import { getOrderByCode } from "@/lib/orders";
-import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = { title: "Thank you", robots: { index: false } };
 
@@ -24,13 +23,12 @@ const NEXT_STEPS = {
 export default async function ThankYouPage({ params }: { params: Promise<{ code: string }> }) {
   const order = getOrderByCode(decodeURIComponent((await params).code));
   if (!order) notFound();
-  const gcashNumber = getSettings().gcashNumber;
 
   return (
     <div className="container-page max-w-2xl pt-10">
       <ClearCart />
       <p className="eyebrow">Order received</p>
-      <h1 className="mt-2 text-4xl leading-tight">Salamat, {order.customerName.split(" ")[0]}!</h1>
+      <h1 className="mt-2 text-4xl leading-tight">Salamat!</h1>
       <p className="mt-3 text-[17px] text-muted-foreground">Keep this order code. We&apos;ll use it when we text you.</p>
       <p className="mt-4 inline-block rounded-2xl bg-primary px-5 py-3 font-heading text-3xl tracking-wide text-primary-foreground">{order.code}</p>
 
@@ -74,12 +72,9 @@ export default async function ThankYouPage({ params }: { params: Promise<{ code:
         </dl>
         <div className="mt-4 border-t border-border pt-4 text-[15px]">
           <p className="font-semibold">{order.paymentMethod === "cod" ? "Cash on delivery" : "GCash"}</p>
-          {order.paymentMethod === "gcash" ? (
-            <p className="text-muted-foreground">Sent to {gcashNumber} · Reference {order.gcashRef}</p>
-          ) : null}
-          <p className="mt-3 font-semibold">Delivering to</p>
+          {/* Order codes are easy to guess, so nothing personal (name, address, GCash reference) is shown here. */}
           <p className="text-muted-foreground">
-            {order.address}, {order.city}, {order.province}
+            {order.paymentMethod === "cod" ? "Pay when your order arrives." : "We're checking the reference you sent."}
           </p>
         </div>
       </section>

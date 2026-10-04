@@ -92,3 +92,16 @@ test("listOrders filters by status, newest first; admin notes save", () => {
   setAdminNotes(a, "Called customer");
   expect(getOrder(a)!.adminNotes).toBe("Called customer");
 });
+
+test("saving a product does not undo stock sold while the form was open", () => {
+  const form = getProductById(ids.productId)!.variants.map((v) => ({ ...v, stockWas: v.stock })); // loaded at 5 and 1
+  place({ lines: [{ variantId: ids.v250, qty: 3 }] }); // 250g is now 2
+  updateProduct(ids.productId, { ...product, name: "Benguet Arabica (typo fixed)", variants: form });
+  expect(stock(ids.v250)).toBe(2);
+  // A deliberate change is applied as a difference: 5 -> 8 means +3.
+  updateProduct(ids.productId, { ...product, variants: form.map((v) => (v.id === ids.v250 ? { ...v, stock: 8 } : v)) });
+  expect(stock(ids.v250)).toBe(5);
+  // Lowering by more than is left stops at zero.
+  updateProduct(ids.productId, { ...product, variants: form.map((v) => (v.id === ids.v250 ? { ...v, stock: 0, stockWas: 50 } : v)) });
+  expect(stock(ids.v250)).toBe(0);
+});

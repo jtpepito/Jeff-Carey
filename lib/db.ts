@@ -40,7 +40,8 @@ CREATE TABLE IF NOT EXISTS orders (
   total INTEGER NOT NULL,
   status TEXT NOT NULL DEFAULT 'new'
     CHECK (status IN ('new','confirmed','shipped','delivered','cancelled')),
-  created_at TEXT NOT NULL
+  created_at TEXT NOT NULL,
+  request_id TEXT
 );
 CREATE TABLE IF NOT EXISTS order_items (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -72,9 +73,17 @@ export function getDb(): DatabaseSync {
   const db = new DatabaseSync(file);
   db.exec("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;");
   db.exec(SCHEMA);
+  migrate(db);
   g.__db = db;
   g.__dbPath = file;
   return db;
+}
+
+/** Brings databases created by an earlier version up to the current schema. */
+function migrate(db: DatabaseSync) {
+  const orderColumns = db.prepare("PRAGMA table_info(orders)").all().map((c) => c.name);
+  if (!orderColumns.includes("request_id")) db.exec("ALTER TABLE orders ADD COLUMN request_id TEXT");
+  db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_request ON orders(request_id) WHERE request_id IS NOT NULL");
 }
 
 export function closeDb() {
