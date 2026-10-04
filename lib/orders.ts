@@ -6,10 +6,14 @@ import { getSettings } from "./settings";
 import { shippingFee } from "./shipping";
 import { manilaDayRange } from "./time";
 
+export type Fulfilment = "delivery" | "pickup";
+
 export type OrderInput = {
   customerName: string; mobile: string; province: string; city: string; address: string;
   notes?: string; paymentMethod: "cod" | "gcash"; gcashRef?: string;
   lines: { variantId: number; qty: number }[];
+  /** Defaults to delivery. Pickup needs no address and has no delivery fee. */
+  fulfilment?: Fulfilment;
   /** Made up once by the checkout page. A retry with the same id returns the first order. */
   requestId?: string;
 };
@@ -27,16 +31,21 @@ const fail = (field: string, error: string): PlaceResult => ({ ok: false, field,
 export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResult {
   const customerName = input.customerName?.trim() ?? "";
   const mobile = (input.mobile ?? "").replace(/[\s-]/g, "");
-  const address = input.address?.trim() ?? "";
+  const fulfilment = input.fulfilment ?? "delivery";
+  const pickup = fulfilment === "pickup";
+  const address = pickup ? "" : (input.address?.trim() ?? "");
   const gcashRef = input.gcashRef?.trim() ?? "";
 
   if (!customerName) return fail("customerName", "Enter your name.");
   if (!/^09\d{9}$/.test(mobile)) return fail("mobile", "Enter an 11-digit mobile number starting with 09.");
-  const group = regionGroupOf(input.province);
-  if (!group) return fail("province", "Choose a province.");
-  if (!deliversTo(input.province)) return fail("province", `Sorry, we only deliver within ${deliveryProvinces().join(", ")}.`);
-  if (!isValidLocation(input.province, input.city)) return fail("city", "Choose a city or municipality.");
-  if (!address) return fail("address", "Enter your street address.");
+  if (fulfilment !== "delivery" && fulfilment !== "pickup") return fail("fulfilment", "Choose delivery or pickup.");
+  const group = pickup ? null : regionGroupOf(input.province);
+  if (!pickup) {
+    if (!group) return fail("province", "Choose a province.");
+    if (!deliversTo(input.province)) return fail("province", `Sorry, we only deliver within ${deliveryProvinces().join(", ")}.`);
+    if (!isValidLocation(input.province, input.city)) return fail("city", "Choose a city or municipality.");
+    if (!address) return fail("address", "Enter your street address.");
+  }
   if (input.paymentMethod !== "cod" && input.paymentMethod !== "gcash")
     return fail("paymentMethod", "Choose a payment method.");
   if (input.paymentMethod === "gcash" && !gcashRef) return fail("gcashRef", "Enter your GCash reference number.");
@@ -77,18 +86,18 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
         subtotal += row.price * qty;
       }
 
-      const fee = shippingFee(subtotal, group, getSettings());
+      const fee = group ? shippingFee(subtotal, group, getSettings()) : 0;
       const code = nextOrderCode(db, now);
       const orderId = db
         .prepare(
           `INSERT INTO orders (code, customer_name, mobile, province, city, address, notes, payment_method,
-             gcash_ref, shipping_fee, subtotal, total, status, created_at, request_id)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?)`,
+             gcash_ref, shipping_fee, subtotal, total, status, created_at, request_id, fulfilment)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?)`,
         )
         .run(
-          code, customerName, mobile, input.province, input.city, address, input.notes?.trim() ?? "",
+          code, customerName, mobile, pickup ? "" : input.province, pickup ? "" : input.city, address, input.notes?.trim() ?? "",
           input.paymentMethod, input.paymentMethod === "gcash" ? gcashRef : null,
-          fee, subtotal, subtotal + fee, now.toISOString(), requestId,
+          fee, subtotal, subtotal + fee, now.toISOString(), requestId, fulfilment,
         ).lastInsertRowid;
 
       const addItem = db.prepare(
@@ -108,7 +117,7 @@ export type OrderItem = { id: number; productId: number; variantId: number; name
 export type Order = {
   id: number; code: string; customerName: string; mobile: string; province: string; city: string;
   address: string; notes: string; adminNotes: string; paymentMethod: "cod" | "gcash"; gcashRef: string | null;
-  shippingFee: number; subtotal: number; total: number; status: OrderStatus; createdAt: string; items: OrderItem[];
+  shippingFee: number; subtotal: number; total: number; status: OrderStatus; createdAt: string; fulfilment: Fulfilment; items: OrderItem[];
 };
 export type OrderSummary = Omit<Order, "items">;
 
@@ -128,7 +137,7 @@ export function nextStatuses(s: OrderStatus): OrderStatus[] {
 
 const ORDER_COLUMNS = `id, code, customer_name AS customerName, mobile, province, city, address, notes,
   admin_notes AS adminNotes, payment_method AS paymentMethod, gcash_ref AS gcashRef,
-  shipping_fee AS shippingFee, subtotal, total, status, created_at AS createdAt`;
+  shipping_fee AS shippingFee, subtotal, total, status, created_at AS createdAt, fulfilment`;
 
 function withItems(row: OrderSummary | undefined): Order | null {
   if (!row) return null;

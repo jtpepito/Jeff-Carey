@@ -6,7 +6,7 @@ import { parsePeso } from "@/lib/money";
 import { updateSettings, type Settings } from "@/lib/settings";
 
 export type SettingsFormValues = {
-  freeShippingThreshold: string; gcashNumber: string; feeNcr: string; feeLuzon: string; feeVismin: string;
+  freeShippingThreshold: string; gcashNumber: string; feeNcr: string; feeLuzon: string; feeVismin: string; pickupInfo: string;
 };
 
 const MONEY_FIELDS = ["freeShippingThreshold", "feeNcr", "feeLuzon", "feeVismin"] as const;
@@ -24,6 +24,9 @@ export async function saveSettings(
   const gcashNumber = String(values?.gcashNumber ?? "").trim();
   if (!gcashNumber) return { ok: false, field: "gcashNumber", error: "Enter the GCash number customers should send to." };
   patch.gcashNumber = gcashNumber.slice(0, 40);
+  const pickupInfo = String(values?.pickupInfo ?? "").trim();
+  if (!pickupInfo) return { ok: false, field: "pickupInfo", error: "Tell customers where and when they can pick up." };
+  patch.pickupInfo = pickupInfo.slice(0, 300);
 
   updateSettings(patch);
   revalidatePath("/", "layout");

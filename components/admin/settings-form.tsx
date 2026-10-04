@@ -13,6 +13,7 @@ const FIELDS: Field[] = [
   { name: "feeLuzon", label: "Luzon shipping fee", hint: "Luzon provinces outside Metro Manila.", money: true, group: "luzon" },
   { name: "feeVismin", label: "Visayas / Mindanao shipping fee", hint: "All Visayas and Mindanao provinces.", money: true, group: "vismin" },
   { name: "gcashNumber", label: "GCash number", hint: "Shown at checkout when a customer chooses GCash.", money: false },
+  { name: "pickupInfo", label: "Pickup details", hint: "Shown at checkout and on the receipt when a customer chooses pickup: the address and the hours.", money: false },
 ];
 
 export function SettingsForm({ initial, groups, area }: { initial: SettingsFormValues; groups: RegionGroup[]; area: string }) {
@@ -46,7 +47,7 @@ export function SettingsForm({ initial, groups, area }: { initial: SettingsFormV
             <input
               id={`s-${f.name}`}
               className={f.money ? "field pl-8" : "field"}
-              inputMode={f.money ? "decimal" : "tel"}
+              inputMode={f.money ? "decimal" : f.name === "gcashNumber" ? "tel" : "text"}
               value={values[f.name]}
               onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
             />

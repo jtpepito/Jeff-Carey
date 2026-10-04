@@ -1,4 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
+import { signIn } from "./admin";
 
 async function addAndCheckout(page: Page, slug: string, extraQty = 0) {
   await page.goto(`/product/${slug}`);
@@ -94,6 +95,41 @@ test("only Cebu can be chosen, and the delivery fee shows without picking a prov
   await expect(page.getByTestId("summary")).toContainText("₱350");
   await expect(page.getByLabel("City / Municipality").locator("option", { hasText: "Lapu-Lapu City" })).toHaveCount(1);
   await expect(page.getByLabel("City / Municipality").locator("option", { hasText: "Quezon City" })).toHaveCount(0);
+});
+
+test("pickup: no address, no delivery fee, and the admin sees it as a pickup order", async ({ page }) => {
+  await addAndCheckout(page, "sprinkle-donuts"); // ₱390
+  await page.getByLabel("Full name").fill("Lia Go");
+  await page.getByLabel("Mobile number").fill("09175556666");
+  await expect(page.getByTestId("summary")).toContainText("₱550"); // delivery is the default: 390 + 160
+  await page.getByLabel("Pickup", { exact: true }).check();
+  await expect(page.getByLabel("Street address")).toHaveCount(0);
+  await expect(page.getByLabel("Province")).toHaveCount(0);
+  await expect(page.getByText("We'll text you the pickup address and time")).toBeVisible();
+  await expect(page.getByTestId("summary")).not.toContainText("₱160");
+  await expect(page.getByTestId("summary")).not.toContainText("₱550");
+  await page.getByLabel("Cash on pickup").check();
+  await page.getByRole("button", { name: "Place order" }).click();
+  await expect(page).toHaveURL(/\/thank-you\/JC-\d{4}-\d{4}/);
+  await expect(page.getByText(/pay in cash when you pick up/i)).toBeVisible();
+  const code = page.url().split("/").pop()!;
+
+  await signIn(page);
+  await page.goto("/admin/orders?status=new");
+  const row = page.getByRole("link", { name: new RegExp(code) });
+  await expect(row).toContainText("Pickup");
+  await expect(row).toContainText("₱390");
+  await row.click();
+  await expect(page.getByText("Customer will pick up")).toBeVisible();
+  await expect(page.getByText("Collect ₱390 at pickup.")).toBeVisible();
+});
+
+test("switching back to delivery brings the address fields and fee back", async ({ page }) => {
+  await addAndCheckout(page, "sprinkle-donuts");
+  await page.getByLabel("Pickup", { exact: true }).check();
+  await page.getByLabel("Delivery", { exact: true }).check();
+  await expect(page.getByLabel("Street address")).toBeVisible();
+  await expect(page.getByTestId("summary")).toContainText("₱550");
 });
 
 test("empty cart at checkout shows an empty state", async ({ page }) => {

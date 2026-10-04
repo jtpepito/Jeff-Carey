@@ -24,6 +24,7 @@ export const brand = {
   ],
   faqs: [
     { q: "Where do you deliver?", a: "Anywhere in Cebu province, and only there for now. Baked goods don't travel well, and we would rather not ship something that arrives stale." },
+    { q: "Can I pick up my order instead?", a: "Yes. Choose Pickup at checkout and there is no delivery fee. We'll text you when it's ready." },
     { q: "How long does delivery take?", a: "We bake and send out your order within 2 business days. Cebu City, Mandaue, Lapu-Lapu and Talisay usually get it the same day it leaves us; towns further out, the next day." },
     { q: "Can I pay cash on delivery?", a: "Yes, anywhere in Cebu. Have the exact amount ready for the rider." },
     { q: "How does GCash payment work?", a: "Send the order total to the GCash number shown at checkout, then type the reference number from your GCash receipt into the form. We check it within a day and then start baking." },

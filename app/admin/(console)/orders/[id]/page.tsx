@@ -13,6 +13,7 @@ export const metadata: Metadata = { title: "Order" };
 export default async function OrderPage({ params }: { params: Promise<{ id: string }> }) {
   const order = getOrder(Number((await params).id));
   if (!order) notFound();
+  const pickup = order.fulfilment === "pickup";
 
   return (
     <>
@@ -49,7 +50,7 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
             </ul>
             <dl className="mt-2 space-y-1.5 border-t border-border pt-3 text-[15px]">
               <div className="flex justify-between"><dt className="text-muted-foreground">Subtotal</dt><dd className="tabular-nums">{formatPeso(order.subtotal)}</dd></div>
-              <div className="flex justify-between"><dt className="text-muted-foreground">Shipping</dt><dd className="tabular-nums">{order.shippingFee === 0 ? "Free" : formatPeso(order.shippingFee)}</dd></div>
+              <div className="flex justify-between"><dt className="text-muted-foreground">Shipping</dt><dd className="tabular-nums">{pickup ? "Pickup" : order.shippingFee === 0 ? "Free" : formatPeso(order.shippingFee)}</dd></div>
               <div className="flex justify-between pt-1 text-lg font-semibold"><dt>Total</dt><dd className="tabular-nums">{formatPeso(order.total)}</dd></div>
             </dl>
           </section>
@@ -64,20 +65,26 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
             <h2 id="customer" className="text-xl">Customer</h2>
             <p className="mt-2 font-medium">{order.customerName}</p>
             <a href={`tel:${order.mobile}`} className="inline-flex min-h-11 items-center font-medium text-primary underline underline-offset-4">{order.mobile}</a>
-            <p className="mt-2 text-[15px]">{order.address}</p>
-            <p className="text-[15px]">{order.city}, {order.province}</p>
+            {pickup ? (
+              <p className="mt-2 inline-block rounded-full bg-gold/25 px-3 py-1 text-sm font-semibold text-[#5f4a0c]">Customer will pick up</p>
+            ) : (
+              <>
+                <p className="mt-2 text-[15px]">{order.address}</p>
+                <p className="text-[15px]">{order.city}, {order.province}</p>
+              </>
+            )}
             {order.notes ? (
-              <p className="mt-3 rounded-xl bg-muted px-3 py-2 text-[15px]"><span className="font-semibold">Delivery notes:</span> {order.notes}</p>
+              <p className="mt-3 rounded-xl bg-muted px-3 py-2 text-[15px]"><span className="font-semibold">{pickup ? "Notes:" : "Delivery notes:"}</span> {order.notes}</p>
             ) : null}
           </section>
 
           <section className="rounded-2xl border border-border bg-card p-5" aria-labelledby="payment">
             <h2 id="payment" className="text-xl">Payment</h2>
-            <p className="mt-2 font-medium">{order.paymentMethod === "cod" ? "Cash on delivery" : "GCash"}</p>
+            <p className="mt-2 font-medium">{order.paymentMethod === "gcash" ? "GCash" : pickup ? "Cash on pickup" : "Cash on delivery"}</p>
             {order.paymentMethod === "gcash" ? (
               <p className="text-[15px]">GCash ref: {order.gcashRef}</p>
             ) : (
-              <p className="text-[15px] text-muted-foreground">Collect {formatPeso(order.total)} on delivery.</p>
+              <p className="text-[15px] text-muted-foreground">Collect {formatPeso(order.total)} {pickup ? "at pickup" : "on delivery"}.</p>
             )}
           </section>
         </div>

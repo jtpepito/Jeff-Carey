@@ -28,7 +28,10 @@ export function OrderRows({ orders }: { orders: OrderSummary[] }) {
               </span>
               <span className="mt-1 block text-sm text-muted-foreground md:mt-0">{formatManila(o.createdAt)}</span>
               <span className="mt-1 flex items-baseline justify-between gap-3 md:contents">
-                <span className="truncate">{o.customerName}</span>
+                <span className="truncate">
+                  {o.customerName}
+                  {o.fulfilment === "pickup" ? <span className="ml-2 rounded-full bg-gold/25 px-2 py-0.5 text-xs font-semibold text-[#5f4a0c]">Pickup</span> : null}
+                </span>
                 <span className="font-semibold tabular-nums md:text-right">{formatPeso(o.total)}</span>
               </span>
               <span className="text-sm text-muted-foreground md:text-foreground">{o.paymentMethod === "cod" ? "COD" : "GCash"}</span>

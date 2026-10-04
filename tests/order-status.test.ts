@@ -105,3 +105,17 @@ test("saving a product does not undo stock sold while the form was open", () => 
   updateProduct(ids.productId, { ...product, variants: form.map((v) => (v.id === ids.v250 ? { ...v, stock: 0, stockWas: 50 } : v)) });
   expect(stock(ids.v250)).toBe(0);
 });
+
+test("orders report whether they are for delivery or pickup", () => {
+  const delivery = place();
+  const pickup = place({ fulfilment: "pickup" });
+  expect(getOrder(delivery)!.fulfilment).toBe("delivery");
+  expect(getOrder(pickup)!.fulfilment).toBe("pickup");
+  expect(listOrders().map((o) => o.fulfilment).sort()).toEqual(["delivery", "pickup"]);
+});
+
+test("cancelling a pickup order restocks it too", () => {
+  const id = place({ fulfilment: "pickup", lines: [{ variantId: ids.v250, qty: 2 }] });
+  expect(changeStatus(id, "cancelled")).toEqual({ ok: true });
+  expect(stock(ids.v250)).toBe(5);
+});

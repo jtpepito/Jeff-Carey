@@ -63,6 +63,8 @@ Stop any running dev or production server before `npm run build` or `npm run e2e
 - **Dates**: timestamps are stored in UTC; "today" and order-code months use Asia/Manila.
 - **Order codes** look like `JC-2610-0001`: prefix, year and month, then a counter that restarts
   each month.
+- **Pickup**: shoppers can choose pickup at checkout (no address, no delivery fee). The pickup
+  address and hours shown to them are the "Pickup details" field in `/admin/settings`.
 - **Delivery area**: `deliveryProvinces` in `lib/brand.ts` (currently Cebu only; an empty list means
   nationwide). Checkout, the order rules and the settings page all follow it.
 - **Shipping**: one fee per region group (Metro Manila, Luzon, Visayas/Mindanao), free at or above the

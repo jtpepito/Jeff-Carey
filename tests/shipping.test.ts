@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { citiesOf, isValidLocation, provinces, regionGroupOf } from "@/lib/ph-locations";
 import { shippingFee } from "@/lib/shipping";
 
-const s = { freeShippingThreshold: 150000, gcashNumber: "", feeNcr: 8000, feeLuzon: 12000, feeVismin: 16000 };
+const s = { freeShippingThreshold: 150000, gcashNumber: "", feeNcr: 8000, feeLuzon: 12000, feeVismin: 16000, pickupInfo: "" };
 
 test("region groups", () => {
   expect(regionGroupOf("Metro Manila")).toBe("ncr");

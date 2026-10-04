@@ -14,6 +14,7 @@ import { EmptyState } from "./empty-state";
 
 type Props = { provinces: string[]; groups: Record<string, RegionGroup>; settings: Settings };
 type Payment = "cod" | "gcash";
+type Fulfilment = "delivery" | "pickup";
 
 export function CheckoutForm({ provinces, groups, settings }: Props) {
   const router = useRouter();
@@ -23,6 +24,7 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
   const [city, setCity] = useState("");
   const [cities, setCities] = useState<string[]>([]);
   const [payment, setPayment] = useState<Payment>("cod");
+  const [fulfilment, setFulfilment] = useState<Fulfilment>("delivery");
   const [error, setError] = useState<{ field: string; message: string } | null>(null);
   const [placed, setPlaced] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -57,8 +59,10 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
   }
 
   const subtotal = subtotalOf(lines);
+  const pickup = fulfilment === "pickup";
   const group = province ? groups[province] : undefined;
-  const fee = group ? shippingFee(subtotal, group, settings) : null;
+  // null means "not known yet": a delivery order with no province chosen.
+  const fee = pickup ? 0 : group ? shippingFee(subtotal, group, settings) : null;
   const total = subtotal + (fee ?? 0);
   const errorFor = (field: string) =>
     error?.field === field ? <p className="field-error" role="alert">{error.message}</p> : null;
@@ -76,6 +80,7 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
       try {
         result = await submitOrder({
           requestId,
+          fulfilment,
         customerName: text("customerName"), mobile: text("mobile"), province, city, address: text("address"),
         notes: text("notes"), paymentMethod: payment, gcashRef: payment === "gcash" ? text("gcashRef") : undefined,
         lines: lines.map((l) => ({ variantId: l.variantId, qty: l.qty })),
@@ -114,6 +119,25 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
           </div>
         </fieldset>
 
+        <fieldset>
+          <legend className="font-heading text-2xl">Delivery or pickup</legend>
+          <div className="mt-4 space-y-3">
+            <RadioCard name="fulfilment" id="ful-delivery" label="Delivery" hint={`We bring it to your address in ${provinces.length <= 3 ? provinces.join(", ") : "your province"}.`} checked={!pickup} onSelect={() => setFulfilment("delivery")} />
+            <RadioCard name="fulfilment" id="ful-pickup" label="Pickup" hint="Collect it from us. No delivery fee." checked={pickup} onSelect={() => setFulfilment("pickup")} />
+          </div>
+          {errorFor("fulfilment")}
+        </fieldset>
+
+        {pickup ? (
+          <fieldset className="space-y-4">
+            <legend className="font-heading text-2xl">Pickup</legend>
+            <p className="rounded-2xl bg-muted p-4 text-[15px] leading-relaxed">{settings.pickupInfo}</p>
+            <div>
+              <label htmlFor="f-notes" className="field-label">Notes <span className="font-normal text-muted-foreground">(optional)</span></label>
+              <textarea id="f-notes" name="notes" className="field" rows={2} maxLength={500} placeholder="Preferred pickup day or time, or who will collect" />
+            </div>
+          </fieldset>
+        ) : (
         <fieldset className="space-y-4">
           <legend className="font-heading text-2xl">Delivery address</legend>
           <div>
@@ -158,12 +182,20 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
             <textarea id="f-notes" name="notes" className="field" rows={2} maxLength={500} placeholder="Landmark, gate code, best time to deliver" />
           </div>
         </fieldset>
+        )}
 
         <fieldset>
           <legend className="font-heading text-2xl">Payment</legend>
           <div className="mt-4 space-y-3">
-            <PaymentOption id="pay-cod" label="Cash on delivery" hint="Pay the rider in cash when your order arrives." checked={payment === "cod"} onSelect={() => setPayment("cod")} />
-            <PaymentOption id="pay-gcash" label="GCash" hint="Send payment now, then enter the reference number." checked={payment === "gcash"} onSelect={() => setPayment("gcash")} />
+            <RadioCard
+              name="paymentMethod"
+              id="pay-cod"
+              label={pickup ? "Cash on pickup" : "Cash on delivery"}
+              hint={pickup ? "Pay in cash when you collect your order." : "Pay the rider in cash when your order arrives."}
+              checked={payment === "cod"}
+              onSelect={() => setPayment("cod")}
+            />
+            <RadioCard name="paymentMethod" id="pay-gcash" label="GCash" hint="Send payment now, then enter the reference number." checked={payment === "gcash"} onSelect={() => setPayment("gcash")} />
           </div>
           {errorFor("paymentMethod")}
           {payment === "gcash" ? (
@@ -171,7 +203,7 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
               <p className="text-[15px]">
                 Send <strong>{formatPeso(total)}</strong> to <strong>{settings.gcashNumber}</strong>, then enter the reference number below.
               </p>
-              {fee === null ? <p className="mt-1 text-sm text-muted-foreground">Choose your province first so the total includes shipping.</p> : null}
+              {fee === null ? <p className="mt-1 text-sm text-muted-foreground">Choose your province first so the total includes delivery.</p> : null}
               <label htmlFor="f-gcashRef" className="field-label mt-4">GCash reference number</label>
               <input id="f-gcashRef" name="gcashRef" className="field" inputMode="numeric" maxLength={60} placeholder="13-digit number on your GCash receipt" />
               {errorFor("gcashRef")}
@@ -207,8 +239,8 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
               <dd className="tabular-nums">{formatPeso(subtotal)}</dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-muted-foreground">Shipping</dt>
-              <dd className="tabular-nums">{fee === null ? "Choose a province" : fee === 0 ? "Free" : formatPeso(fee)}</dd>
+              <dt className="text-muted-foreground">{pickup ? "Pickup" : "Delivery"}</dt>
+              <dd className="tabular-nums">{pickup ? "No fee" : fee === null ? "Choose a province" : fee === 0 ? "Free" : formatPeso(fee)}</dd>
             </div>
             <div className="flex justify-between pt-2 text-lg font-semibold">
               <dt>Total</dt>
@@ -224,7 +256,9 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
             {pending ? "Placing order…" : "Place order"}
           </button>
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            {payment === "cod" ? `You'll pay ${formatPeso(total)} in cash on delivery.` : "We'll verify your GCash payment before packing."}
+            {payment === "gcash"
+              ? "We'll verify your GCash payment before baking."
+              : `You'll pay ${formatPeso(total)} in cash ${pickup ? "when you pick up" : "on delivery"}.`}
           </p>
         </div>
       </div>
@@ -232,12 +266,12 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
   );
 }
 
-function PaymentOption({
-  id, label, hint, checked, onSelect,
-}: { id: string; label: string; hint: string; checked: boolean; onSelect: () => void }) {
+function RadioCard({
+  name, id, label, hint, checked, onSelect,
+}: { name: string; id: string; label: string; hint: string; checked: boolean; onSelect: () => void }) {
   return (
     <div className={cn("relative flex items-start gap-3 rounded-2xl border bg-card p-4", checked ? "border-primary ring-1 ring-primary" : "border-input")}>
-      <input id={id} type="radio" name="paymentMethod" checked={checked} onChange={onSelect} aria-describedby={`${id}-hint`} className="relative z-10 mt-1 size-5 cursor-pointer accent-[var(--primary)]" />
+      <input id={id} type="radio" name={name} checked={checked} onChange={onSelect} aria-describedby={`${id}-hint`} className="relative z-10 mt-1 size-5 cursor-pointer accent-[var(--primary)]" />
       <div>
         {/* The label's ::after stretches over the whole card, so anywhere on it selects the option. */}
         <label htmlFor={id} className="text-base font-semibold after:absolute after:inset-0 after:cursor-pointer">{label}</label>

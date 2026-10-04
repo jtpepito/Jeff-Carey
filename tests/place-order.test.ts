@@ -102,3 +102,34 @@ test("retrying with the same request id returns the first order instead of makin
   expect([orderCount(), stock(ids.v250)]).toEqual([1, 3]);
   expect(placeOrder(order({ requestId: "req-other" }), NOW)).toEqual({ ok: true, code: "JC-2610-0002" });
 });
+
+test("pickup needs no address and never charges a delivery fee", () => {
+  const r = placeOrder(order({ fulfilment: "pickup", province: "", city: "", address: "" }), NOW);
+  expect(r).toEqual({ ok: true, code: "JC-2610-0001" });
+  expect(getDb().prepare("SELECT fulfilment, shipping_fee, subtotal, total, province, city, address FROM orders").get())
+    .toEqual({ fulfilment: "pickup", shipping_fee: 0, subtotal: 50000, total: 50000, province: "", city: "", address: "" });
+  expect(stock(ids.v250)).toBe(4);
+});
+
+test("pickup does not store an address even if one is sent", () => {
+  placeOrder(order({ fulfilment: "pickup" }), NOW);
+  expect(getDb().prepare("SELECT province, city, address FROM orders").get()).toEqual({ province: "", city: "", address: "" });
+});
+
+test("delivery is the default and still needs an address", () => {
+  expect(placeOrder(order({ address: "" }), NOW)).toMatchObject({ ok: false, field: "address" });
+  expect(placeOrder(order({ fulfilment: "delivery", city: "" }), NOW)).toMatchObject({ ok: false, field: "city" });
+  placeOrder(order(), NOW);
+  expect((getDb().prepare("SELECT fulfilment f FROM orders").get() as { f: string }).f).toBe("delivery");
+});
+
+test("an unknown fulfilment value is rejected", () => {
+  expect(placeOrder(order({ fulfilment: "drone" as never }), NOW)).toMatchObject({ ok: false, field: "fulfilment" });
+  expect(orderCount()).toBe(0);
+});
+
+test("pickup still needs a name, a mobile number and, for GCash, a reference", () => {
+  expect(placeOrder(order({ fulfilment: "pickup", customerName: "" }), NOW)).toMatchObject({ ok: false, field: "customerName" });
+  expect(placeOrder(order({ fulfilment: "pickup", mobile: "123" }), NOW)).toMatchObject({ ok: false, field: "mobile" });
+  expect(placeOrder(order({ fulfilment: "pickup", paymentMethod: "gcash" }), NOW)).toMatchObject({ ok: false, field: "gcashRef" });
+});

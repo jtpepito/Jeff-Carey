@@ -41,7 +41,8 @@ CREATE TABLE IF NOT EXISTS orders (
   status TEXT NOT NULL DEFAULT 'new'
     CHECK (status IN ('new','confirmed','shipped','delivered','cancelled')),
   created_at TEXT NOT NULL,
-  request_id TEXT
+  request_id TEXT,
+  fulfilment TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfilment IN ('delivery','pickup'))
 );
 CREATE TABLE IF NOT EXISTS order_items (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -83,6 +84,8 @@ export function getDb(): DatabaseSync {
 function migrate(db: DatabaseSync) {
   const orderColumns = db.prepare("PRAGMA table_info(orders)").all().map((c) => c.name);
   if (!orderColumns.includes("request_id")) db.exec("ALTER TABLE orders ADD COLUMN request_id TEXT");
+  if (!orderColumns.includes("fulfilment"))
+    db.exec("ALTER TABLE orders ADD COLUMN fulfilment TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfilment IN ('delivery','pickup'))");
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_request ON orders(request_id) WHERE request_id IS NOT NULL");
 }
 

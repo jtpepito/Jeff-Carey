@@ -110,24 +110,24 @@ const PRODUCTS: SeedProduct[] = [
 
 type SeedOrder = {
   daysAgo: number; name: string; mobile: string; province: string; city: string; address: string;
-  notes?: string; gcashRef?: string; status: OrderStatus; items: [slug: string, variant: string, qty: number][];
+  notes?: string; gcashRef?: string; pickup?: boolean; status: OrderStatus; items: [slug: string, variant: string, qty: number][];
 };
 
 const ORDERS: SeedOrder[] = [
   { daysAgo: 59, name: "Maria Santos", mobile: "09171230001", province: "Cebu", city: "Cebu City", address: "45 Gorordo Ave, Lahug", status: "delivered", items: [["classic-cinnamon-rolls", "Classic glaze", 2], ["red-velvet-cupcakes", "Cream cheese frosting", 1]] },
   { daysAgo: 53, name: "Jose Ramirez", mobile: "09181230002", province: "Cebu", city: "Cebu City", address: "Unit 3B, 12 Escario St, Kamputhaw", gcashRef: "4012887766541", status: "delivered", items: [["chocolate-chunk-cookies", "Dark chocolate", 2], ["chocolate-cupcakes", "Chocolate buttercream", 1]] },
-  { daysAgo: 47, name: "Liza Bautista", mobile: "09191230003", province: "Cebu", city: "Mandaue City", address: "8 A. Del Rosario St, Guizo", status: "delivered", items: [["chocolate-berry-cake", "Dark chocolate", 1]] },
+  { daysAgo: 47, name: "Liza Bautista", pickup: true, mobile: "09191230003", province: "Cebu", city: "Mandaue City", address: "8 A. Del Rosario St, Guizo", status: "delivered", items: [["chocolate-berry-cake", "Dark chocolate", 1]] },
   { daysAgo: 41, name: "Paolo Mendoza", mobile: "09271230004", province: "Cebu", city: "Talisay City", address: "Blk 4 Lot 9, Bulacao Heights", notes: "Leave with the guard if no one answers.", gcashRef: "5013996654120", status: "delivered", items: [["sprinkle-donuts", "Strawberry glaze", 2], ["iced-sugar-cookies", "Vanilla", 2], ["butter-croissants", "Butter", 1]] },
   { daysAgo: 34, name: "Carmela Dizon", mobile: "09061230005", province: "Cebu", city: "Lapu-Lapu City", address: "27 M.L. Quezon National Hwy, Pusok", status: "cancelled", items: [["blueberry-cheesecake", "Blueberry", 1]] },
   { daysAgo: 28, name: "Ramon Villanueva", mobile: "09151230006", province: "Cebu", city: "Cebu City", address: "1803 Tower B, Cebu IT Park, Apas", gcashRef: "6014115543209", status: "shipped", items: [["chocolate-cupcakes", "Mocha", 1], ["fudge-brownie-bars", "Original", 2]] },
-  { daysAgo: 23, name: "Grace Lim", mobile: "09171230007", province: "Cebu", city: "Mandaue City", address: "16 Hernan Cortes St, Banilad", status: "shipped", items: [["butter-croissants", "Almond", 2], ["butter-cookie-tin", "Classic", 1]] },
+  { daysAgo: 23, name: "Grace Lim", pickup: true, mobile: "09171230007", province: "Cebu", city: "Mandaue City", address: "16 Hernan Cortes St, Banilad", status: "shipped", items: [["butter-croissants", "Almond", 2], ["butter-cookie-tin", "Classic", 1]] },
   { daysAgo: 19, name: "Antonio Cruz", mobile: "09281230008", province: "Cebu", city: "Consolacion", address: "5 Purok 2, Cansaga", status: "cancelled", items: [["red-velvet-cupcakes", "Vanilla buttercream", 2]] },
   { daysAgo: 15, name: "Bea Fernandez", mobile: "09391230009", province: "Cebu", city: "Minglanilla", address: "214 Purok 3, Tunghaan", gcashRef: "7015224432108", status: "shipped", items: [["classic-cinnamon-rolls", "Cream cheese frosting", 1], ["hokkaido-milk-loaf", "Plain", 2]] },
   { daysAgo: 12, name: "Miguel Torres", mobile: "09171230010", province: "Cebu", city: "Liloan", address: "Km 18, Yati", status: "confirmed", items: [["chocolate-chunk-cookies", "Milk chocolate", 3]] },
   { daysAgo: 8, name: "Katrina Reyes", mobile: "09181230011", province: "Cebu", city: "Cebu City", address: "Unit 12F, 7 Salinas Dr, Lahug", gcashRef: "8016333321007", status: "confirmed", items: [["chocolate-berry-cake", "Dark chocolate", 2], ["classic-cinnamon-rolls", "Classic glaze", 2]] },
   { daysAgo: 5, name: "Noel Aquino", mobile: "09061230012", province: "Cebu", city: "Danao City", address: "19 Rizal St, Poblacion", status: "confirmed", items: [["iced-sugar-cookies", "Calamansi", 1], ["fudge-brownie-bars", "Sprinkles", 1]] },
   { daysAgo: 3, name: "Isabel Garcia", mobile: "09191230013", province: "Cebu", city: "Cebu City", address: "730 Sikatuna St, Parian", gcashRef: "9017442210906", status: "new", items: [["butter-croissants", "Chocolate", 1], ["chocolate-cupcakes", "Chocolate buttercream", 1]] },
-  { daysAgo: 2, name: "Dennis Uy", mobile: "09271230014", province: "Cebu", city: "Lapu-Lapu City", address: "33 Basak-Marigondon Rd", status: "new", items: [["sprinkle-donuts", "Chocolate glaze", 1]] },
+  { daysAgo: 2, name: "Dennis Uy", pickup: true, mobile: "09271230014", province: "Cebu", city: "Lapu-Lapu City", address: "33 Basak-Marigondon Rd", status: "new", items: [["sprinkle-donuts", "Chocolate glaze", 1]] },
   { daysAgo: 1, name: "Trisha Navarro", mobile: "09151230015", province: "Cebu", city: "Talisay City", address: "Blk 12 Lot 3, Lawaan 2", notes: "Call before delivery, please.", status: "new", items: [["butter-cookie-tin", "Sea salt", 1], ["hokkaido-milk-loaf", "Cheese", 1], ["red-velvet-cupcakes", "Cream cheese frosting", 2]] },
 ];
 
@@ -156,7 +156,7 @@ export function seed(now: Date = new Date()): void {
     const r = placeOrder(
       {
         customerName: o.name, mobile: o.mobile, province: o.province, city: o.city, address: o.address,
-        notes: o.notes, paymentMethod: o.gcashRef ? "gcash" : "cod", gcashRef: o.gcashRef,
+        notes: o.notes, fulfilment: o.pickup ? "pickup" : "delivery", paymentMethod: o.gcashRef ? "gcash" : "cod", gcashRef: o.gcashRef,
         lines: o.items.map(([slug, variant, qty]) => ({ variantId: variantId.get(`${slug}|${variant}`) ?? -1, qty })),
       },
       new Date(now.getTime() - o.daysAgo * DAY_MS),

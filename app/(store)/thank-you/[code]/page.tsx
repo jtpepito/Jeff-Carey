@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import { ClearCart } from "@/components/store/clear-cart";
 import { formatPeso } from "@/lib/money";
 import { getOrderByCode } from "@/lib/orders";
+import { getSettings } from "@/lib/settings";
 
 export const metadata: Metadata = { title: "Thank you", robots: { index: false } };
 
@@ -20,9 +21,23 @@ const NEXT_STEPS = {
   ],
 };
 
+const PICKUP_STEPS = {
+  cod: [
+    "We'll text you within a day to confirm your order and your pickup time.",
+    "We bake it within 2 business days and text you when it's ready.",
+    "Pay in cash when you pick up. Having the exact amount ready helps.",
+  ],
+  gcash: [
+    "We verify your GCash reference within a day and text you once it's confirmed.",
+    "We bake your order within 2 business days and text you when it's ready.",
+    "Nothing more to pay. Just give your order code when you pick up.",
+  ],
+};
+
 export default async function ThankYouPage({ params }: { params: Promise<{ code: string }> }) {
   const order = getOrderByCode(decodeURIComponent((await params).code));
   if (!order) notFound();
+  const pickup = order.fulfilment === "pickup";
 
   return (
     <div className="container-page max-w-2xl pt-10">
@@ -35,7 +50,7 @@ export default async function ThankYouPage({ params }: { params: Promise<{ code:
       <section className="mt-9" aria-labelledby="next-heading">
         <h2 id="next-heading" className="text-2xl">What happens next</h2>
         <ol className="mt-4 space-y-4">
-          {NEXT_STEPS[order.paymentMethod].map((step, i) => (
+          {(pickup ? PICKUP_STEPS : NEXT_STEPS)[order.paymentMethod].map((step, i) => (
             <li key={step} className="flex gap-4">
               <span aria-hidden className="flex size-8 shrink-0 items-center justify-center rounded-full bg-secondary text-sm font-bold">{i + 1}</span>
               <p className="pt-1 text-[15px] leading-relaxed">{step}</p>
@@ -43,6 +58,13 @@ export default async function ThankYouPage({ params }: { params: Promise<{ code:
           ))}
         </ol>
       </section>
+
+      {pickup ? (
+        <section className="mt-9 rounded-3xl bg-muted p-5" aria-labelledby="pickup-heading">
+          <h2 id="pickup-heading" className="text-2xl">Where to pick up</h2>
+          <p className="mt-2 text-[15px] leading-relaxed">{getSettings().pickupInfo}</p>
+        </section>
+      ) : null}
 
       <section className="mt-9 rounded-3xl border border-border bg-card p-5" aria-labelledby="receipt-heading">
         <h2 id="receipt-heading" className="text-2xl">Your order</h2>
@@ -63,7 +85,7 @@ export default async function ThankYouPage({ params }: { params: Promise<{ code:
           </div>
           <div className="flex justify-between">
             <dt className="text-muted-foreground">Shipping</dt>
-            <dd className="tabular-nums">{order.shippingFee === 0 ? "Free" : formatPeso(order.shippingFee)}</dd>
+            <dd className="tabular-nums">{pickup ? "Pickup" : order.shippingFee === 0 ? "Free" : formatPeso(order.shippingFee)}</dd>
           </div>
           <div className="flex justify-between pt-2 text-lg font-semibold">
             <dt>Total</dt>
@@ -71,10 +93,10 @@ export default async function ThankYouPage({ params }: { params: Promise<{ code:
           </div>
         </dl>
         <div className="mt-4 border-t border-border pt-4 text-[15px]">
-          <p className="font-semibold">{order.paymentMethod === "cod" ? "Cash on delivery" : "GCash"}</p>
+          <p className="font-semibold">{order.paymentMethod === "gcash" ? "GCash" : pickup ? "Cash on pickup" : "Cash on delivery"}</p>
           {/* Order codes are easy to guess, so nothing personal (name, address, GCash reference) is shown here. */}
           <p className="text-muted-foreground">
-            {order.paymentMethod === "cod" ? "Pay when your order arrives." : "We're checking the reference you sent."}
+            {order.paymentMethod === "gcash" ? "We're checking the reference you sent." : pickup ? "Pay when you pick up." : "Pay when your order arrives."}
           </p>
         </div>
       </section>

@@ -16,6 +16,7 @@ test("settings change the storefront", async ({ page }) => {
   await page.getByLabel("Delivery fee").fill("95");
   await page.getByLabel("Free-shipping threshold").fill("2,000");
   await page.getByLabel("GCash number").fill("0998 765 4321");
+  await page.getByLabel("Pickup details").fill("Unit 2, 14 Sample St, Lahug. 10am to 6pm.");
   await page.getByRole("button", { name: "Save settings" }).click();
   await expect(page.getByText("Settings saved")).toBeVisible();
 
@@ -26,4 +27,6 @@ test("settings change the storefront", async ({ page }) => {
   await expect(page.getByTestId("summary")).toContainText("₱95");
   await page.getByLabel("GCash", { exact: true }).check();
   await expect(page.getByText(/0998 765 4321/)).toBeVisible();
+  await page.getByLabel("Pickup", { exact: true }).check();
+  await expect(page.getByText("Unit 2, 14 Sample St, Lahug. 10am to 6pm.")).toBeVisible();
 });

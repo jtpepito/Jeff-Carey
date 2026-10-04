@@ -8,7 +8,13 @@ test("defaults apply on an empty database", () => {
   expect(getSettings()).toEqual({
     freeShippingThreshold: 150000, gcashNumber: "0917 000 0000",
     feeNcr: 8000, feeLuzon: 12000, feeVismin: 16000,
+    pickupInfo: "We'll text you the pickup address and time once your order is confirmed.",
   });
+});
+
+test("pickup details are stored as text", () => {
+  updateSettings({ pickupInfo: "Unit 2, 14 Sample St, Lahug. 10am to 6pm." });
+  expect(getSettings().pickupInfo).toBe("Unit 2, 14 Sample St, Lahug. 10am to 6pm.");
 });
 
 test("updateSettings persists only the given keys", () => {
