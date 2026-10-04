@@ -25,7 +25,7 @@
   --color-card: var(--card);
   --color-gold: var(--gold);
   --color-gold-ink: var(--gold-ink);
-  --color-olive-deep: var(--olive-deep);
+  --color-green-deep: var(--green-deep);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -37,26 +37,26 @@
 /* Brand tokens. Re-skin the starter by changing these and lib/brand.ts. */
 :root {
   --background: #f1e9d6; /* beige */
-  --foreground: #2a2a18; /* near-black olive */
+  --foreground: #1d2a24; /* near-black green */
   --card: #faf5e8;
-  --card-foreground: #2a2a18;
+  --card-foreground: #1d2a24;
   --popover: #faf5e8;
-  --popover-foreground: #2a2a18;
-  --primary: #565c2a; /* olive green */
+  --popover-foreground: #1d2a24;
+  --primary: #0e4b3b; /* emerald, sampled from the logo background */
   --primary-foreground: #faf5e8;
   --secondary: #e6dcc3;
-  --secondary-foreground: #2a2a18;
+  --secondary-foreground: #1d2a24;
   --muted: #e9e0c9;
-  --muted-foreground: #5c583f;
+  --muted-foreground: #55594a;
   --accent: #e6dcc3;
-  --accent-foreground: #2a2a18;
+  --accent-foreground: #1d2a24;
   --destructive: #a3341f;
   --border: #d8ccae;
   --input: #c2b58f;
-  --ring: #565c2a;
-  --gold: #c9a227; /* accent: fills, badges, bars */
+  --ring: #0e4b3b;
+  --gold: #d4ac34; /* accent, sampled from the logo lettering: fills, badges, bars */
   --gold-ink: #7a5c0b; /* the same gold, dark enough to read as text on beige */
-  --olive-deep: #2e3217; /* footer */
+  --green-deep: #0a3329; /* footer */
   --radius: 0.75rem;
 }
 

@@ -4,7 +4,7 @@ import { brand } from "@/lib/brand";
 
 export function Footer() {
   return (
-    <footer className="mt-20 bg-olive-deep text-[#f3eadb]">
+    <footer className="mt-20 bg-green-deep text-[#f3eadb]">
       <div className="container-page grid gap-12 py-14 md:grid-cols-[1fr_1.4fr]">
         <div>
           <Logo size={96} />
