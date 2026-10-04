@@ -26,7 +26,7 @@ Fixed by the brief. Do not deviate.
 - Admin auth: env `ADMIN_PASSWORD`, HMAC-signed cookie.
 - Currency ₱. All "today" logic uses Asia/Manila.
 
-Location: `C:\WWJ\Claude Coding\eCommerce`, its own git repository.
+Location: `C:\WWJ\Claude Coding\Jef&Carey`, its own git repository.
 
 ## 3. Demo brand
 
