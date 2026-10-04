@@ -3,16 +3,23 @@
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { saveSettings, type SettingsFormValues } from "@/actions/settings";
+import type { RegionGroup } from "@/lib/ph-locations";
 
-const FIELDS: { name: keyof SettingsFormValues; label: string; hint: string; money: boolean }[] = [
+type Field = { name: keyof SettingsFormValues; label: string; hint: string; money: boolean; group?: RegionGroup };
+
+const FIELDS: Field[] = [
   { name: "freeShippingThreshold", label: "Free-shipping threshold", hint: "Orders with a subtotal at or above this amount ship free.", money: true },
-  { name: "feeNcr", label: "NCR shipping fee", hint: "Metro Manila.", money: true },
-  { name: "feeLuzon", label: "Luzon shipping fee", hint: "Luzon provinces outside Metro Manila.", money: true },
-  { name: "feeVismin", label: "Visayas / Mindanao shipping fee", hint: "All Visayas and Mindanao provinces.", money: true },
+  { name: "feeNcr", label: "NCR shipping fee", hint: "Metro Manila.", money: true, group: "ncr" },
+  { name: "feeLuzon", label: "Luzon shipping fee", hint: "Luzon provinces outside Metro Manila.", money: true, group: "luzon" },
+  { name: "feeVismin", label: "Visayas / Mindanao shipping fee", hint: "All Visayas and Mindanao provinces.", money: true, group: "vismin" },
   { name: "gcashNumber", label: "GCash number", hint: "Shown at checkout when a customer chooses GCash.", money: false },
 ];
 
-export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
+export function SettingsForm({ initial, groups, area }: { initial: SettingsFormValues; groups: RegionGroup[]; area: string }) {
+  // Fees for regions outside the delivery area are hidden; their stored values are sent back unchanged.
+  const fields = FIELDS.filter((f) => !f.group || groups.includes(f.group)).map((f) =>
+    f.group && groups.length === 1 ? { ...f, label: "Delivery fee", hint: `Charged on orders below the free-shipping threshold. Delivery area: ${area}.` } : f,
+  );
   const [values, setValues] = useState(initial);
   const [error, setError] = useState<{ field: string; message: string } | null>(null);
   const [pending, startTransition] = useTransition();
@@ -31,7 +38,7 @@ export function SettingsForm({ initial }: { initial: SettingsFormValues }) {
         });
       }}
     >
-      {FIELDS.map((f) => (
+      {fields.map((f) => (
         <div key={f.name}>
           <label htmlFor={`s-${f.name}`} className="field-label">{f.label}</label>
           <div className="relative">

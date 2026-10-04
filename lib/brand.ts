@@ -4,7 +4,9 @@ const img = (id: string, w = 900) => `https://images.unsplash.com/photo-${id}?au
 export const brand = {
   name: "Jef&Carey",
   prefix: "JC",
-  heroEyebrow: "Small-batch · Baked to order",
+  /** Provinces we deliver to, spelled as in data/ph-locations.json. Leave empty to deliver nationwide. */
+  deliveryProvinces: ["Cebu"] as string[],
+  heroEyebrow: "Baked to order · Delivered in Cebu",
   heroHeadline: "Baked the day it leaves our kitchen.",
   tagline: "Cinnamon rolls, donuts, cookies and cakes, baked to order in small batches.",
   promise: "Nothing sits on a shelf. We bake your order, box it and send it out within 2 business days.",
@@ -16,13 +18,14 @@ export const brand = {
   ],
   storyImageAlt: "Freshly baked bread and pastries on bakery shelves",
   shippingCopy: [
-    "We bake your order after it comes in and hand it to our courier within 2 business days.",
-    "Metro Manila: 1 to 2 days after dispatch. Luzon: 2 to 4 days. Visayas and Mindanao: 3 to 6 days.",
-    "Cash on delivery is available nationwide. Shipping is free once your order reaches the free-shipping amount shown in your cart.",
+    "We deliver within Cebu province only, so everything arrives fresh.",
+    "We bake your order after it comes in and send it out within 2 business days. Cebu City, Mandaue, Lapu-Lapu and Talisay usually get it the same day it leaves us; towns further out, the next day.",
+    "Cash on delivery is available anywhere in Cebu. Delivery is free once your order reaches the free-delivery amount shown in your cart.",
   ],
   faqs: [
-    { q: "How long does delivery take?", a: "We bake and dispatch within 2 business days. After that, expect 1 to 2 days for Metro Manila, 2 to 4 days for the rest of Luzon, and 3 to 6 days for Visayas and Mindanao." },
-    { q: "Can I pay cash on delivery?", a: "Yes, anywhere our courier delivers. Have the exact amount ready for the rider." },
+    { q: "Where do you deliver?", a: "Anywhere in Cebu province, and only there for now. Baked goods don't travel well, and we would rather not ship something that arrives stale." },
+    { q: "How long does delivery take?", a: "We bake and send out your order within 2 business days. Cebu City, Mandaue, Lapu-Lapu and Talisay usually get it the same day it leaves us; towns further out, the next day." },
+    { q: "Can I pay cash on delivery?", a: "Yes, anywhere in Cebu. Have the exact amount ready for the rider." },
     { q: "How does GCash payment work?", a: "Send the order total to the GCash number shown at checkout, then type the reference number from your GCash receipt into the form. We check it within a day and then start baking." },
     { q: "How long do your bakes stay fresh?", a: "Rolls, donuts and loaves are best within 3 days at room temperature. Cookies and brownies keep for 2 weeks in a sealed container. Cakes and cupcakes keep for 4 days in the ref. Everything except frosted cakes freezes well for a month." },
     { q: "What if something arrives damaged?", a: "Send us a photo within 2 days of delivery and we'll replace it or refund you, your choice." },

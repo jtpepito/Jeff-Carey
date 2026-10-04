@@ -22,7 +22,7 @@ export function setupShop() {
 
 export function order(over: Partial<OrderInput> = {}): OrderInput {
   return {
-    customerName: "Ana Reyes", mobile: "09171234567", province: "Metro Manila", city: "Quezon City",
+    customerName: "Ana Reyes", mobile: "09171234567", province: "Cebu", city: "Cebu City",
     address: "12 Mabini St", paymentMethod: "cod", lines: [{ variantId: ids.v250, qty: 1 }], ...over,
   };
 }

@@ -7,8 +7,8 @@ test("a storefront order appears as new with correct totals, then cancel restore
   await page.getByRole("dialog").getByRole("link", { name: /checkout/i }).click();
   await page.getByLabel("Full name").fill("Carlo Dizon");
   await page.getByLabel("Mobile number").fill("09181112222");
-  await page.getByLabel("Province").selectOption("Benguet");
-  await page.getByLabel("City / Municipality").selectOption("Baguio City");
+  await page.getByLabel("Province").selectOption("Cebu");
+  await page.getByLabel("City / Municipality").selectOption("Talisay City");
   await page.getByLabel("Street address").fill("5 Session Rd");
   await page.getByLabel("GCash", { exact: true }).check();
   await page.getByLabel("GCash reference number").fill("9988776655443");
@@ -26,7 +26,7 @@ test("a storefront order appears as new with correct totals, then cancel restore
   await page.goto("/admin/orders?status=new");
   const row = page.getByRole("link", { name: new RegExp(code) });
   await expect(row).toContainText("Carlo Dizon");
-  await expect(row).toContainText("₱400"); // 280 + 120 Luzon
+  await expect(row).toContainText("₱440"); // 280 + 160 delivery
   await row.click();
   await expect(page.getByText("GCash ref: 9988776655443")).toBeVisible();
   await expect(page.getByText("Fudge Brownie Bars — Original")).toBeVisible();

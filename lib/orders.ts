@@ -1,4 +1,5 @@
 import { getDb, tx } from "./db";
+import { deliversTo, deliveryProvinces } from "./delivery";
 import { nextOrderCode } from "./order-code";
 import { isValidLocation, regionGroupOf } from "./ph-locations";
 import { getSettings } from "./settings";
@@ -33,6 +34,7 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
   if (!/^09\d{9}$/.test(mobile)) return fail("mobile", "Enter an 11-digit mobile number starting with 09.");
   const group = regionGroupOf(input.province);
   if (!group) return fail("province", "Choose a province.");
+  if (!deliversTo(input.province)) return fail("province", `Sorry, we only deliver within ${deliveryProvinces().join(", ")}.`);
   if (!isValidLocation(input.province, input.city)) return fail("city", "Choose a city or municipality.");
   if (!address) return fail("address", "Enter your street address.");
   if (input.paymentMethod !== "cod" && input.paymentMethod !== "gcash")

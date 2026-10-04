@@ -10,7 +10,7 @@ test("places an order: totals, status, code, stock decrement, snapshots", () => 
   const r = placeOrder(order({ lines: [{ variantId: ids.v250, qty: 2 }] }), NOW);
   expect(r).toEqual({ ok: true, code: "JC-2610-0001" });
   const o = getDb().prepare("SELECT * FROM orders").get() as Record<string, unknown>;
-  expect(o).toMatchObject({ subtotal: 100000, shipping_fee: 8000, total: 108000, status: "new", gcash_ref: null, created_at: NOW.toISOString() });
+  expect(o).toMatchObject({ subtotal: 100000, shipping_fee: 16000, total: 116000, status: "new", gcash_ref: null, created_at: NOW.toISOString() });
   expect(stock(ids.v250)).toBe(3);
   expect(getDb().prepare("SELECT name_snapshot, price_snapshot, qty FROM order_items").all())
     .toEqual([{ name_snapshot: "Benguet Arabica — 250g", price_snapshot: 50000, qty: 2 }]);
@@ -20,12 +20,17 @@ test("free shipping at exactly ₱1,500, charged just below", () => {
   placeOrder(order({ lines: [{ variantId: ids.v250, qty: 3 }] }), NOW); // 150000
   placeOrder(order({ lines: [{ variantId: ids.v250, qty: 2 }] }), NOW); // 100000
   const fees = getDb().prepare("SELECT shipping_fee FROM orders ORDER BY id").all().map((r) => r.shipping_fee);
-  expect(fees).toEqual([0, 8000]);
+  expect(fees).toEqual([0, 16000]);
 });
 
-test("shipping fee follows the region group of the province", () => {
-  placeOrder(order({ province: "Cebu", city: "Cebu City" }), NOW);
-  expect((getDb().prepare("SELECT shipping_fee f FROM orders").get() as { f: number }).f).toBe(16000);
+test("an address outside the delivery area is refused and nothing changes", () => {
+  const r = placeOrder(order({ province: "Metro Manila", city: "Quezon City" }), NOW);
+  expect(r).toEqual({ ok: false, field: "province", error: "Sorry, we only deliver within Cebu." });
+  expect([orderCount(), stock(ids.v250)]).toEqual([0, 5]);
+});
+
+test("any city or municipality in Cebu is accepted", () => {
+  expect(placeOrder(order({ city: "Oslob" }), NOW).ok).toBe(true);
 });
 
 test("insufficient stock rejects the whole order and changes nothing", () => {
@@ -61,7 +66,7 @@ test("empty cart, unknown variant and inactive product are rejected", () => {
 
 test.each([
   [{ customerName: "  " }, "customerName"], [{ mobile: "9171234567" }, "mobile"], [{ mobile: "0917123456a" }, "mobile"],
-  [{ province: "Atlantis" }, "province"], [{ city: "Cebu City" }, "city"], [{ address: "" }, "address"],
+  [{ province: "Atlantis" }, "province"], [{ city: "Quezon City" }, "city"], [{ address: "" }, "address"],
   [{ paymentMethod: "card" as never }, "paymentMethod"],
 ])("contact validation %j -> %s", (over, field) => {
   expect(placeOrder(order(over as Partial<OrderInput>), NOW)).toMatchObject({ ok: false, field });

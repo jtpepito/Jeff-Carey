@@ -8,7 +8,7 @@ async function addAndCheckout(page: Page, slug: string, extraQty = 0) {
   await expect(page).toHaveURL(/\/checkout/);
 }
 
-async function fillContact(page: Page, province = "Metro Manila", city = "Quezon City") {
+async function fillContact(page: Page, province = "Cebu", city = "Cebu City") {
   await page.getByLabel("Full name").fill("Ana Reyes");
   await page.getByLabel("Mobile number").fill("09171234567");
   await page.getByLabel("Province").selectOption(province);
@@ -21,8 +21,8 @@ test("COD order: no reference field, correct totals, thank-you page", async ({ p
   await fillContact(page);
   await page.getByLabel("Cash on delivery").check();
   await expect(page.getByLabel("GCash reference number")).toHaveCount(0);
-  await expect(page.getByTestId("summary")).toContainText("₱80");
-  await expect(page.getByTestId("summary")).toContainText("₱470");
+  await expect(page.getByTestId("summary")).toContainText("₱160");
+  await expect(page.getByTestId("summary")).toContainText("₱550");
   await page.getByRole("button", { name: "Place order" }).click();
   await expect(page).toHaveURL(/\/thank-you\/JC-\d{4}-\d{4}/);
   await expect(page.getByText(/pay the rider/i)).toBeVisible();
@@ -71,7 +71,7 @@ test("contact errors show beside the field", async ({ page }) => {
 
 test("shipping is free in the summary at ₱1,500 or more", async ({ page }) => {
   await addAndCheckout(page, "red-velvet-cupcakes", 6); // ₱240 x 7 = ₱1,680
-  await fillContact(page, "Davao del Sur", "Davao City");
+  await fillContact(page, "Cebu", "Mandaue City");
   await expect(page.getByTestId("summary")).toContainText("Free");
 });
 
@@ -85,6 +85,15 @@ test("double tap on Place order creates one order", async ({ page }) => {
   // If the double tap had made a second order, it would have taken the next number.
   const next = `${prefix}-${month}-${String(Number(n) + 1).padStart(4, "0")}`;
   expect((await page.request.get(`/thank-you/${next}`)).status()).toBe(404);
+});
+
+test("only Cebu can be chosen, and the delivery fee shows without picking a province", async ({ page }) => {
+  await addAndCheckout(page, "hokkaido-milk-loaf"); // ₱190
+  await expect(page.getByLabel("Province").locator("option")).toHaveText(["Cebu"]);
+  await expect(page.getByTestId("summary")).toContainText("₱160");
+  await expect(page.getByTestId("summary")).toContainText("₱350");
+  await expect(page.getByLabel("City / Municipality").locator("option", { hasText: "Lapu-Lapu City" })).toHaveCount(1);
+  await expect(page.getByLabel("City / Municipality").locator("option", { hasText: "Quezon City" })).toHaveCount(0);
 });
 
 test("empty cart at checkout shows an empty state", async ({ page }) => {

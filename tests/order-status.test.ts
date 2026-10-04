@@ -57,9 +57,9 @@ test("unknown order id", () => {
 test("getOrder returns contact, payment and item snapshots", () => {
   const id = place({ paymentMethod: "gcash", gcashRef: "777", notes: "Leave at the gate", lines: [{ variantId: ids.v250, qty: 2 }] });
   expect(getOrder(id)).toMatchObject({
-    code: "JC-2610-0001", customerName: "Ana Reyes", mobile: "09171234567", province: "Metro Manila",
-    city: "Quezon City", address: "12 Mabini St", notes: "Leave at the gate", adminNotes: "",
-    paymentMethod: "gcash", gcashRef: "777", subtotal: 100000, shippingFee: 8000, total: 108000,
+    code: "JC-2610-0001", customerName: "Ana Reyes", mobile: "09171234567", province: "Cebu",
+    city: "Cebu City", address: "12 Mabini St", notes: "Leave at the gate", adminNotes: "",
+    paymentMethod: "gcash", gcashRef: "777", subtotal: 100000, shippingFee: 16000, total: 116000,
     status: "new", createdAt: NOW.toISOString(),
     items: [{ productId: ids.productId, variantId: ids.v250, name: "Benguet Arabica — 250g", price: 50000, qty: 2 }],
   });
@@ -74,12 +74,12 @@ test("a product with order history is deactivated, not deleted", () => {
 
 test("dashboard: Manila-day orders, revenue without cancelled, pending count", () => {
   place({}, new Date("2026-10-03T15:00:00Z")); // Oct 3, 23:00 Manila -> yesterday
-  place({ lines: [{ variantId: ids.v250, qty: 1 }] }, NOW); // today, 58000
+  place({ lines: [{ variantId: ids.v250, qty: 1 }] }, NOW); // today, 66000
   const cancelled = place({ lines: [{ variantId: ids.v250, qty: 1 }] }, NOW);
   changeStatus(cancelled, "cancelled");
   const d = dashboardStats(NOW);
   expect(d.todayOrders).toHaveLength(2);
-  expect(d.todayRevenue).toBe(58000);
+  expect(d.todayRevenue).toBe(66000);
   expect(d.pendingCount).toBe(2);
 });
 

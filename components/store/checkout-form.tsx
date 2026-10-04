@@ -18,7 +18,8 @@ type Payment = "cod" | "gcash";
 export function CheckoutForm({ provinces, groups, settings }: Props) {
   const router = useRouter();
   const { lines, ready, notices, refresh } = useCart();
-  const [province, setProvince] = useState("");
+  // With a single delivery province there is nothing to choose, so it starts selected.
+  const [province, setProvince] = useState(provinces.length === 1 ? provinces[0] : "");
   const [city, setCity] = useState("");
   const [cities, setCities] = useState<string[]>([]);
   const [payment, setPayment] = useState<Payment>("cod");
@@ -121,13 +122,20 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
               id="f-province"
               className="field"
               value={province}
-              onChange={(e) => { setProvince(e.target.value); setCity(""); setCities([]); }}
+              onChange={(e) => {
+                // Re-picking the same province must not empty the city list: nothing would reload it.
+                if (e.target.value === province) return;
+                setProvince(e.target.value);
+                setCity("");
+                setCities([]);
+              }}
             >
-              <option value="">Choose a province</option>
+              {provinces.length > 1 ? <option value="">Choose a province</option> : null}
               {provinces.map((p) => (
                 <option key={p} value={p}>{p}</option>
               ))}
             </select>
+            {provinces.length === 1 ? <p className="mt-1.5 text-sm text-muted-foreground">We deliver within {provinces[0]} only.</p> : null}
             {errorFor("province")}
           </div>
           <div>
