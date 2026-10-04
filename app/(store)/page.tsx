@@ -42,7 +42,7 @@ export default function HomePage() {
         </div>
         <Link href={`/product/${hero.slug}`} className="group relative block md:order-2" aria-label={`Shop now: ${hero.name}`}>
           <div className="relative aspect-[4/5] overflow-hidden rounded-[2rem] bg-muted md:aspect-[5/6]">
-            <ProductImage src={hero.images[0]} alt={hero.name} sizes="(min-width: 768px) 50vw, 100vw" priority />
+            <ProductImage src={hero.images[0]} alt={hero.name} sizes="(min-width: 768px) 50vw, 88vw" priority quality={60} />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/70 to-transparent p-5 pt-20 text-white">
               <p className="text-xs font-semibold tracking-[0.18em] uppercase opacity-90">This week&apos;s pick</p>
               <div className="mt-1 flex items-end justify-between gap-4">

@@ -31,7 +31,7 @@ export function OrderRows({ orders }: { orders: OrderSummary[] }) {
                 <span className="truncate">{o.customerName}</span>
                 <span className="font-semibold tabular-nums md:text-right">{formatPeso(o.total)}</span>
               </span>
-              <span className="text-sm text-muted-foreground uppercase md:text-foreground">{o.paymentMethod === "cod" ? "COD" : "GCash"}</span>
+              <span className="text-sm text-muted-foreground md:text-foreground">{o.paymentMethod === "cod" ? "COD" : "GCash"}</span>
             </Link>
           </li>
         ))}
