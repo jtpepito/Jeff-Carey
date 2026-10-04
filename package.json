@@ -10,7 +10,7 @@
     "typecheck": "node node_modules/typescript/bin/tsc --noEmit",
     "test": "node node_modules/vitest/vitest.mjs run",
     "seed": "node node_modules/tsx/dist/cli.mjs scripts/seed.ts",
-    "e2e": "node node_modules/next/dist/bin/next build && node node_modules/@playwright/test/cli.js test"
+    "e2e": "node node_modules/next/dist/bin/next build && node node_modules/tsx/dist/cli.mjs scripts/e2e-setup.ts && node node_modules/@playwright/test/cli.js test"
   },
   "dependencies": {
     "@base-ui/react": "^1.8.0",

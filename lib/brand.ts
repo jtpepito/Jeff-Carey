@@ -4,6 +4,7 @@ const img = (id: string, w = 900) => `https://images.unsplash.com/photo-${id}?au
 export const brand = {
   name: "Bukid Lane",
   prefix: "BL",
+  heroHeadline: "From the farm to your cup, with nobody in between.",
   tagline: "Coffee, cacao and pantry staples, bought straight from Philippine farms.",
   promise: "Roasted and packed to order. Out our door within 2 business days.",
   story: [
