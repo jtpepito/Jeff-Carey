@@ -14,9 +14,10 @@ export const metadata: Metadata = {
 export const viewport: Viewport = { themeColor: "#faf6ee" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  // Font variables sit on <html> because the base font-family is set there.
   return (
-    <html lang="en">
-      <body className={`${body.variable} ${display.variable}`}>{children}</body>
+    <html lang="en" className={`${body.variable} ${display.variable}`}>
+      <body>{children}</body>
     </html>
   );
 }

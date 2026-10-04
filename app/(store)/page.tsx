@@ -67,7 +67,7 @@ export default function HomePage() {
             See all
           </Link>
         </div>
-        <div className="scroll-row mt-5 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:px-6 md:mx-auto md:max-w-6xl md:grid md:grid-cols-4 md:overflow-visible">
+        <div className="scroll-row mt-5 flex snap-x snap-mandatory scroll-px-4 gap-4 overflow-x-auto px-4 pb-2 sm:scroll-px-6 sm:px-6 md:mx-auto md:max-w-6xl md:grid md:grid-cols-4 md:overflow-visible">
           {bestSellers.map((p) => (
             <div key={p.id} className="w-[62%] shrink-0 snap-start sm:w-[40%] md:w-auto">
               <ProductCard product={p} sizes="(min-width: 768px) 25vw, 62vw" />
