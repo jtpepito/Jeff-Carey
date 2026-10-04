@@ -23,8 +23,9 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --color-honey: var(--honey);
-  --color-cacao: var(--cacao);
+  --color-gold: var(--gold);
+  --color-gold-ink: var(--gold-ink);
+  --color-olive-deep: var(--olive-deep);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -35,26 +36,27 @@
 
 /* Brand tokens. Re-skin the starter by changing these and lib/brand.ts. */
 :root {
-  --background: #faf6ee; /* warm paper */
-  --foreground: #2b1f17; /* roasted cacao */
-  --card: #fffdf8;
-  --card-foreground: #2b1f17;
-  --popover: #fffdf8;
-  --popover-foreground: #2b1f17;
-  --primary: #23422f; /* forest green */
-  --primary-foreground: #fbf7ee;
-  --secondary: #efe7d8;
-  --secondary-foreground: #2b1f17;
-  --muted: #f0e9db;
-  --muted-foreground: #6a5a4c;
-  --accent: #efe7d8;
-  --accent-foreground: #2b1f17;
+  --background: #f1e9d6; /* beige */
+  --foreground: #2a2a18; /* near-black olive */
+  --card: #faf5e8;
+  --card-foreground: #2a2a18;
+  --popover: #faf5e8;
+  --popover-foreground: #2a2a18;
+  --primary: #565c2a; /* olive green */
+  --primary-foreground: #faf5e8;
+  --secondary: #e6dcc3;
+  --secondary-foreground: #2a2a18;
+  --muted: #e9e0c9;
+  --muted-foreground: #5c583f;
+  --accent: #e6dcc3;
+  --accent-foreground: #2a2a18;
   --destructive: #a3341f;
-  --border: #e1d6c2;
-  --input: #cfc2aa;
-  --ring: #23422f;
-  --honey: #b8651b;
-  --cacao: #3a281d;
+  --border: #d8ccae;
+  --input: #c2b58f;
+  --ring: #565c2a;
+  --gold: #c9a227; /* accent: fills, badges, bars */
+  --gold-ink: #7a5c0b; /* the same gold, dark enough to read as text on beige */
+  --olive-deep: #2e3217; /* footer */
   --radius: 0.75rem;
 }
 
@@ -112,7 +114,7 @@
     @apply mt-1.5 text-sm font-medium text-destructive;
   }
   .eyebrow {
-    @apply text-xs font-semibold tracking-[0.18em] text-honey uppercase;
+    @apply text-xs font-semibold tracking-[0.18em] text-gold-ink uppercase;
   }
   .scroll-row {
     scrollbar-width: none;

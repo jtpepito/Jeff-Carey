@@ -177,7 +177,7 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
           <h2 id="summary-heading" className="text-2xl">Order summary</h2>
           {error?.field === "lines" ? <p className="field-error" role="alert">{error.message}</p> : null}
           {notices.length > 0 ? (
-            <ul role="status" className="mt-3 space-y-1 rounded-xl bg-honey/10 px-3 py-2 text-sm">
+            <ul role="status" className="mt-3 space-y-1 rounded-xl bg-gold/10 px-3 py-2 text-sm">
               {notices.map((n) => (
                 <li key={n}>{n}</li>
               ))}

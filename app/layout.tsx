@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   description: brand.tagline,
 };
 
-export const viewport: Viewport = { themeColor: "#faf6ee" };
+export const viewport: Viewport = { themeColor: "#f1e9d6" };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   // Font variables sit on <html> because the base font-family is set there.

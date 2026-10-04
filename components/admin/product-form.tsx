@@ -62,7 +62,7 @@ export function ProductForm({ productId, initial, categories }: Props) {
     <form onSubmit={onSubmit} noValidate className="mt-5 grid gap-6 md:grid-cols-[1.4fr_1fr] md:items-start">
       <div className="space-y-6">
         {deactivated ? (
-          <p role="status" className="rounded-2xl border border-honey/40 bg-honey/10 px-4 py-3 text-[15px]">
+          <p role="status" className="rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3 text-[15px]">
             This product has past orders, so it was deactivated instead of deleted. It no longer shows in the store, and order history is unchanged.
           </p>
         ) : null}

@@ -16,7 +16,7 @@ const PRODUCTS: SeedProduct[] = [
     description: "Grown at 1,400 metres in Atok, Benguet, by the Bagayao family. Medium roast, with brown sugar sweetness and a clean citrus finish. This is the coffee we started with and still drink every morning.",
     howToUse: "Use 15g of coffee for every 250ml of water just off the boil. Works well in a pour-over, French press or drip machine. Grind right before brewing if you can.",
     photos: ["1447933601403-0c6688de566e", "1559056199-641a0ac8b55e", "1495474472287-4d71bcdd2085"],
-    variants: [["250g", 24, "BL-COF-BEN-250"], ["500g", 10, "BL-COF-BEN-500"]],
+    variants: [["250g", 24, "JC-COF-BEN-250"], ["500g", 10, "JC-COF-BEN-500"]],
   },
   {
     slug: "sagada-dark-roast", name: "Sagada Dark Roast", category: "Coffee", featured: true,
@@ -24,7 +24,7 @@ const PRODUCTS: SeedProduct[] = [
     description: "A full-bodied dark roast from Sagada, Mountain Province. Dark chocolate and toasted nut, with very little acidity. Holds up to milk and to ice.",
     howToUse: "Brew strong for espresso-style drinks, or 16g per 250ml for a French press. Steep 4 minutes, then press slowly.",
     photos: ["1514432324607-a09d9b4aefdd", "1509042239860-f550ce710b93"],
-    variants: [["250g", 18, "BL-COF-SAG-250"], ["500g", 4, "BL-COF-SAG-500"]],
+    variants: [["250g", 18, "JC-COF-SAG-250"], ["500g", 4, "JC-COF-SAG-500"]],
   },
   {
     slug: "mt-apo-natural", name: "Mt. Apo Natural", category: "Coffee", featured: false,
@@ -32,7 +32,7 @@ const PRODUCTS: SeedProduct[] = [
     description: "Naturally processed arabica from Bansalan, Davao del Sur, dried whole on raised beds for 21 days. Expect ripe berry, a winey sweetness and a long finish. A small lot, so it sells out.",
     howToUse: "Best as a pour-over: 15g of coffee, 240ml of water at 92°C, poured over 3 minutes. Let it cool a little before the first sip to taste the fruit.",
     photos: ["1497935586351-b67a49e012bf", "1461023058943-07fcbe16d735"],
-    variants: [["250g", 12, "BL-COF-APO-250"], ["500g", 0, "BL-COF-APO-500"]],
+    variants: [["250g", 12, "JC-COF-APO-250"], ["500g", 0, "JC-COF-APO-500"]],
   },
   {
     slug: "batangas-barako", name: "Batangas Barako", category: "Coffee", featured: false,
@@ -40,7 +40,7 @@ const PRODUCTS: SeedProduct[] = [
     description: "Liberica from Lipa, Batangas, roasted dark the way lolo liked it. Bold and smoky with a jackfruit aroma you won't find in any other coffee.",
     howToUse: "Simmer 2 tablespoons in 2 cups of water for 3 minutes, then strain. Or brew it in a drip machine. Sweeten with muscovado.",
     photos: ["1511920170033-f8396924c348", "1442512595331-e89e73853f31"],
-    variants: [["250g", 30, "BL-COF-BAR-250"], ["500g", 15, "BL-COF-BAR-500"]],
+    variants: [["250g", 30, "JC-COF-BAR-250"], ["500g", 15, "JC-COF-BAR-500"]],
   },
   {
     slug: "davao-tablea-discs", name: "Davao Tablea Discs", category: "Tablea & Cacao", featured: true,
@@ -48,7 +48,7 @@ const PRODUCTS: SeedProduct[] = [
     description: "Stone-ground cacao from Calinan, Davao, pressed into 20g discs. Each pouch holds 12 discs, enough for 12 cups of thick tsokolate or one pot of champorado.",
     howToUse: "Melt 1 disc in 200ml of hot water or milk over low heat, whisking until smooth. For champorado, add 4 discs to a cup of cooked glutinous rice.",
     photos: ["1511381939415-e44015466834", "1481391319762-47dff72954d9"],
-    variants: [["Pure 100%", 20, "BL-TAB-DSC-PUR"], ["Muscovado-sweetened", 14, "BL-TAB-DSC-MUS"], ["Sili-spiced", 3, "BL-TAB-DSC-SIL"]],
+    variants: [["Pure 100%", 20, "JC-TAB-DSC-PUR"], ["Muscovado-sweetened", 14, "JC-TAB-DSC-MUS"], ["Sili-spiced", 3, "JC-TAB-DSC-SIL"]],
   },
   {
     slug: "drinking-chocolate", name: "Drinking Chocolate", category: "Tablea & Cacao", featured: false,
@@ -56,7 +56,7 @@ const PRODUCTS: SeedProduct[] = [
     description: "Finely ground 70% Davao cacao blended with coconut sugar. Dissolves in a minute and tastes like melted chocolate, not cocoa powder. 250g tin, about 12 cups.",
     howToUse: "Whisk 3 tablespoons into 200ml of hot milk. For iced, dissolve in a splash of hot water first, then pour over ice and cold milk.",
     photos: ["1542843137-8791a6904d14", "1606312619070-d48b4c652a52"],
-    variants: [["Classic", 16, "BL-TAB-DRK-CLA"], ["Sea Salt", 9, "BL-TAB-DRK-SAL"], ["Barako Mocha", 11, "BL-TAB-DRK-MOC"]],
+    variants: [["Classic", 16, "JC-TAB-DRK-CLA"], ["Sea Salt", 9, "JC-TAB-DRK-SAL"], ["Barako Mocha", 11, "JC-TAB-DRK-MOC"]],
   },
   {
     slug: "roasted-cacao-nibs", name: "Roasted Cacao Nibs", category: "Tablea & Cacao", featured: false,
@@ -64,7 +64,7 @@ const PRODUCTS: SeedProduct[] = [
     description: "Crushed, roasted cacao beans and nothing else. Crunchy, bitter and nutty. 200g resealable pouch.",
     howToUse: "Scatter over oatmeal, yogurt or banana bread. Blend a tablespoon into a smoothie for chocolate flavour without sugar.",
     photos: ["1549007994-cb92caebd54b", "1481391319762-47dff72954d9"],
-    variants: [["Plain", 22, "BL-TAB-NIB-PLN"], ["Coco Sugar-glazed", 8, "BL-TAB-NIB-GLZ"]],
+    variants: [["Plain", 22, "JC-TAB-NIB-PLN"], ["Coco Sugar-glazed", 8, "JC-TAB-NIB-GLZ"]],
   },
   {
     slug: "cacao-husk-tea", name: "Cacao Husk Tea", category: "Tablea & Cacao", featured: false,
@@ -72,7 +72,7 @@ const PRODUCTS: SeedProduct[] = [
     description: "The papery shells left after we winnow cacao, toasted until fragrant. Brews into a light, chocolate-scented tea with no bitterness and almost no caffeine. 100g, about 40 cups.",
     howToUse: "Steep 1 heaping teaspoon in 250ml of boiling water for 6 minutes. Good hot with honey, or chilled overnight in the ref.",
     photos: ["1544787219-7f47ccb76574", "1564890369478-c89ca6d9cde9"],
-    variants: [["Original", 25, "BL-TAB-TEA-ORG"], ["Pandan", 12, "BL-TAB-TEA-PAN"]],
+    variants: [["Original", 25, "JC-TAB-TEA-ORG"], ["Pandan", 12, "JC-TAB-TEA-PAN"]],
   },
   {
     slug: "wild-forest-honey", name: "Wild Forest Honey", category: "Pantry", featured: true,
@@ -80,7 +80,7 @@ const PRODUCTS: SeedProduct[] = [
     description: "Raw honey gathered by Tagbanua harvesters in the forests of Palawan. Dark, slightly smoky and less sweet than supermarket honey. Unheated and unfiltered, so it may crystallise.",
     howToUse: "Stir into coffee or cacao tea, drizzle over kesong puti, or take a spoonful straight. If it crystallises, sit the jar in warm water for 10 minutes.",
     photos: ["1558642452-9d2a7deb7f62", "1471943311424-646960669fbc"],
-    variants: [["250ml", 15, "BL-PAN-HON-250"], ["500ml", 6, "BL-PAN-HON-500"]],
+    variants: [["250ml", 15, "JC-PAN-HON-250"], ["500ml", 6, "JC-PAN-HON-500"]],
   },
   {
     slug: "coconut-sugar", name: "Coconut Sugar", category: "Pantry", featured: false,
@@ -88,7 +88,7 @@ const PRODUCTS: SeedProduct[] = [
     description: "Made from coconut sap boiled down in open pans in Quezon province. Tastes of caramel and swaps one-for-one with brown sugar in any recipe.",
     howToUse: "Use in place of brown sugar in coffee, baking and sauces. Store sealed in a dry place; break up any lumps with a fork.",
     photos: ["1610725664285-7c57e6eeac3f", "1599599810769-bcde5a160d32"],
-    variants: [["500g", 40, "BL-PAN-COC-500"], ["1kg", 18, "BL-PAN-COC-1KG"]],
+    variants: [["500g", 40, "JC-PAN-COC-500"], ["1kg", 18, "JC-PAN-COC-1KG"]],
   },
   {
     slug: "negros-muscovado", name: "Negros Muscovado", category: "Pantry", featured: false,
@@ -96,7 +96,7 @@ const PRODUCTS: SeedProduct[] = [
     description: "Unrefined cane sugar from a family mill in Bago, Negros Occidental. Moist and deep brown with a molasses flavour that white sugar can't match.",
     howToUse: "Sweeten barako or tsokolate, or use it in leche flan, kutsinta and barbecue marinades. Keep the bag tightly closed so it stays soft.",
     photos: ["1599599810769-bcde5a160d32", "1509440159596-0249088772ff"],
-    variants: [["500g", 35, "BL-PAN-MUS-500"], ["1kg", 5, "BL-PAN-MUS-1KG"]],
+    variants: [["500g", 35, "JC-PAN-MUS-500"], ["1kg", 5, "JC-PAN-MUS-1KG"]],
   },
   {
     slug: "spiced-coconut-vinegar", name: "Spiced Coconut Vinegar", category: "Pantry", featured: false,
@@ -104,7 +104,7 @@ const PRODUCTS: SeedProduct[] = [
     description: "Coconut sap vinegar aged 8 months, then bottled with siling labuyo, garlic and ginger. Sharp, a little sweet and properly spicy.",
     howToUse: "Use as sawsawan for grilled pork, lumpia and chicharon, or splash into paksiw and kinilaw. Shake before pouring.",
     photos: ["1474979266404-7eaacbcd87c5", "1504674900247-0877df9cc836"],
-    variants: [["375ml", 28, "BL-PAN-VIN-375"], ["750ml", 13, "BL-PAN-VIN-750"]],
+    variants: [["375ml", 28, "JC-PAN-VIN-375"], ["750ml", 13, "JC-PAN-VIN-750"]],
   },
 ];
 

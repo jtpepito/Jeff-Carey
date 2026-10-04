@@ -24,7 +24,7 @@ test("COD order: no reference field, correct totals, thank-you page", async ({ p
   await expect(page.getByTestId("summary")).toContainText("₱80");
   await expect(page.getByTestId("summary")).toContainText("₱470");
   await page.getByRole("button", { name: "Place order" }).click();
-  await expect(page).toHaveURL(/\/thank-you\/BL-\d{4}-\d{4}/);
+  await expect(page).toHaveURL(/\/thank-you\/JC-\d{4}-\d{4}/);
   await expect(page.getByText(/pay the rider/i)).toBeVisible();
   await expect(page.getByText("Batangas Barako — 250g")).toBeVisible();
   // Order codes are guessable, so the receipt must not show who ordered or where it is going.
@@ -56,7 +56,7 @@ test("a dropped connection shows a retry message, and retrying places one order"
   await expect(page.getByText(/couldn't reach the shop/i)).toBeVisible();
   await page.unroute("**/checkout");
   await page.getByRole("button", { name: "Place order" }).click();
-  await expect(page).toHaveURL(/\/thank-you\/BL-\d{4}-\d{4}/);
+  await expect(page).toHaveURL(/\/thank-you\/JC-\d{4}-\d{4}/);
 });
 
 test("contact errors show beside the field", async ({ page }) => {
@@ -80,7 +80,7 @@ test("double tap on Place order creates one order", async ({ page }) => {
   await fillContact(page);
   await page.getByLabel("Cash on delivery").check();
   await page.getByRole("button", { name: "Place order" }).dblclick();
-  await expect(page).toHaveURL(/\/thank-you\/BL-\d{4}-\d{4}/);
+  await expect(page).toHaveURL(/\/thank-you\/JC-\d{4}-\d{4}/);
   const [prefix, month, n] = page.url().split("/").pop()!.split("-");
   // If the double tap had made a second order, it would have taken the next number.
   const next = `${prefix}-${month}-${String(Number(n) + 1).padStart(4, "0")}`;
@@ -93,5 +93,5 @@ test("empty cart at checkout shows an empty state", async ({ page }) => {
 });
 
 test("unknown order code is a 404", async ({ page }) => {
-  expect((await page.goto("/thank-you/BL-0000-0000"))!.status()).toBe(404);
+  expect((await page.goto("/thank-you/JC-0000-0000"))!.status()).toBe(404);
 });

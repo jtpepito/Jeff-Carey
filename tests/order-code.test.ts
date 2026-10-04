@@ -13,16 +13,16 @@ function insertCode(code: string) {
 }
 
 test("first code of a month is 0001", () => {
-  expect(nextOrderCode(getDb(), new Date("2026-10-04T03:00:00Z"))).toBe("BL-2610-0001");
+  expect(nextOrderCode(getDb(), new Date("2026-10-04T03:00:00Z"))).toBe("JC-2610-0001");
 });
 
 test("continues from the highest number in the month and restarts next month", () => {
-  insertCode("BL-2610-0001"); insertCode("BL-2610-0007");
-  expect(nextOrderCode(getDb(), new Date("2026-10-04T03:00:00Z"))).toBe("BL-2610-0008");
-  expect(nextOrderCode(getDb(), new Date("2026-11-02T03:00:00Z"))).toBe("BL-2611-0001");
+  insertCode("JC-2610-0001"); insertCode("JC-2610-0007");
+  expect(nextOrderCode(getDb(), new Date("2026-10-04T03:00:00Z"))).toBe("JC-2610-0008");
+  expect(nextOrderCode(getDb(), new Date("2026-11-02T03:00:00Z"))).toBe("JC-2611-0001");
 });
 
 test("counts numerically past 9999", () => {
-  insertCode("BL-2610-9999"); insertCode("BL-2610-10000");
-  expect(nextOrderCode(getDb(), new Date("2026-10-04T03:00:00Z"))).toBe("BL-2610-10001");
+  insertCode("JC-2610-9999"); insertCode("JC-2610-10000");
+  expect(nextOrderCode(getDb(), new Date("2026-10-04T03:00:00Z"))).toBe("JC-2610-10001");
 });

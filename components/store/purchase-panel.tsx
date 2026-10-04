@@ -51,7 +51,7 @@ export function PurchasePanel({ product }: { product: Product }) {
         })}
       </div>
       {variant && variant.stock <= 5 ? (
-        <p className="mt-3 text-sm font-medium text-honey">Only {variant.stock} left</p>
+        <p className="mt-3 text-sm font-medium text-gold-ink">Only {variant.stock} left</p>
       ) : null}
 
       <div className="mt-6 flex items-center gap-3">

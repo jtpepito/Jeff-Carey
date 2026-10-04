@@ -30,12 +30,12 @@ test("removing the last item shows the empty cart", async ({ page }) => {
 
 test("corrupt or stale cart storage does not crash the site", async ({ page }) => {
   await page.goto("/");
-  await page.evaluate(() => localStorage.setItem("bl-cart-v1", "{not json"));
+  await page.evaluate(() => localStorage.setItem("jc-cart-v1", "{not json"));
   await page.reload();
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
   await page.evaluate(() =>
     localStorage.setItem(
-      "bl-cart-v1",
+      "jc-cart-v1",
       JSON.stringify([
         { variantId: 987654, qty: 1, productName: "Ghost", variantName: "X", slug: "ghost", price: 100, image: null, stock: 3 },
       ]),

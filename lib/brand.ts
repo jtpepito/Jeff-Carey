@@ -2,8 +2,8 @@ const img = (id: string, w = 900) => `https://images.unsplash.com/photo-${id}?au
 
 /** Everything brand-specific lives here. Re-skin the starter by editing this file. */
 export const brand = {
-  name: "Bukid Lane",
-  prefix: "BL",
+  name: "Jef&Carey",
+  prefix: "JC",
   heroHeadline: "From the farm to your cup, with nobody in between.",
   tagline: "Coffee, cacao and pantry staples, bought straight from Philippine farms.",
   promise: "Roasted and packed to order. Out our door within 2 business days.",
@@ -33,5 +33,5 @@ export const brand = {
     img("1481391319762-47dff72954d9", 600),
   ],
   storyImage: img("1442512595331-e89e73853f31", 1200),
-  social: "@bukidlane",
+  social: "@jefandcarey",
 };

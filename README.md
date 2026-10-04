@@ -1,10 +1,10 @@
-# Bukid Lane storefront
+# Jef&Carey storefront
 
 An e-commerce starter for a Philippine direct-to-consumer brand: a mobile-first storefront and a
 simple order console. Checkout takes cash on delivery or a GCash reference number. There is no card
 gateway.
 
-The demo brand is Bukid Lane (coffee, tablea and pantry goods). Everything brand-specific is in
+The demo brand is Jef&Carey (coffee, tablea and pantry goods). Everything brand-specific is in
 three places, so the starter can be re-skinned:
 
 - `lib/brand.ts` — name, order-code prefix, copy, FAQs
@@ -60,7 +60,7 @@ Stop any running dev or production server before `npm run build` or `npm run e2e
 - **Data** lives in `data/store.db` (git-ignored). Set `DB_PATH` to use a different file.
 - **Money** is stored as integer centavos. Only `lib/money.ts` converts to and from ₱ text.
 - **Dates**: timestamps are stored in UTC; "today" and order-code months use Asia/Manila.
-- **Order codes** look like `BL-2610-0001`: prefix, year and month, then a counter that restarts
+- **Order codes** look like `JC-2610-0001`: prefix, year and month, then a counter that restarts
   each month.
 - **Shipping**: one fee each for Metro Manila, Luzon and Visayas/Mindanao, free at or above the
   free-shipping threshold. All editable in `/admin/settings`.

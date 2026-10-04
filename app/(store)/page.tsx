@@ -107,7 +107,7 @@ export default function HomePage() {
             <ProductImage src={brand.storyImage} alt="Coffee being prepared" sizes="(min-width: 768px) 50vw, 100vw" />
           </div>
           <div>
-            <p className="text-xs font-semibold tracking-[0.18em] text-[#e9c592] uppercase">Our story</p>
+            <p className="text-xs font-semibold tracking-[0.18em] text-[#e6cf7a] uppercase">Our story</p>
             <h2 id="story" className="mt-3 text-3xl leading-tight sm:text-4xl">Fourteen farms. No middlemen.</h2>
             <div className="mt-4 space-y-3 text-[16px] leading-relaxed text-primary-foreground/85">
               {brand.story.map((p) => (
@@ -121,7 +121,7 @@ export default function HomePage() {
       <section className="container-page pt-16" aria-labelledby="gallery">
         <div className="flex items-end justify-between">
           <h2 id="gallery" className="text-3xl">From our kitchen to yours</h2>
-          <p className="text-[15px] font-semibold text-honey">{brand.social}</p>
+          <p className="text-[15px] font-semibold text-gold-ink">{brand.social}</p>
         </div>
         <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-6">
           {brand.gallery.map((src, i) => (

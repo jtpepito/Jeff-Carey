@@ -5,7 +5,7 @@ export type CartLine = {
   price: number; image: string | null; stock: number;
 };
 
-export const CART_KEY = "bl-cart-v1";
+export const CART_KEY = "jc-cart-v1";
 
 const lineName = (l: { productName: string; variantName: string }) => `${l.productName} — ${l.variantName}`;
 

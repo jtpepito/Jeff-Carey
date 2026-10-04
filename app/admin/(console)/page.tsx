@@ -61,7 +61,7 @@ export default function DashboardPage() {
                     <span>
                       {v.productName} <span className="text-muted-foreground">· {v.variantName}</span>
                     </span>
-                    <span className={v.stock === 0 ? "font-semibold text-destructive" : "font-semibold text-honey"}>
+                    <span className={v.stock === 0 ? "font-semibold text-destructive" : "font-semibold text-gold-ink"}>
                       {v.stock === 0 ? "Sold out" : `${v.stock} left`}
                     </span>
                   </Link>

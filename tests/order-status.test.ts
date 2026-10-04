@@ -51,13 +51,13 @@ test("cancel survives a variant that was removed after the order", () => {
 test("unknown order id", () => {
   expect(changeStatus(424242, "confirmed").ok).toBe(false);
   expect(getOrder(424242)).toBeNull();
-  expect(getOrderByCode("BL-0000-0000")).toBeNull();
+  expect(getOrderByCode("JC-0000-0000")).toBeNull();
 });
 
 test("getOrder returns contact, payment and item snapshots", () => {
   const id = place({ paymentMethod: "gcash", gcashRef: "777", notes: "Leave at the gate", lines: [{ variantId: ids.v250, qty: 2 }] });
   expect(getOrder(id)).toMatchObject({
-    code: "BL-2610-0001", customerName: "Ana Reyes", mobile: "09171234567", province: "Metro Manila",
+    code: "JC-2610-0001", customerName: "Ana Reyes", mobile: "09171234567", province: "Metro Manila",
     city: "Quezon City", address: "12 Mabini St", notes: "Leave at the gate", adminNotes: "",
     paymentMethod: "gcash", gcashRef: "777", subtotal: 100000, shippingFee: 8000, total: 108000,
     status: "new", createdAt: NOW.toISOString(),

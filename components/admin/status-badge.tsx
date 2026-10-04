@@ -2,7 +2,7 @@ import type { OrderStatus } from "@/lib/orders";
 import { cn } from "@/lib/utils";
 
 const STYLES: Record<OrderStatus, string> = {
-  new: "bg-honey/15 text-[#8a4a10]",
+  new: "bg-gold/15 text-[#5f4a0c]",
   confirmed: "bg-[#dbe7f3] text-[#1f4a73]",
   shipped: "bg-[#e6def5] text-[#4b3384]",
   delivered: "bg-[#d9ecdd] text-[#1f5a31]",

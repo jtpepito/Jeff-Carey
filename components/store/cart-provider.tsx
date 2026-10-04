@@ -111,7 +111,7 @@ export function CartButton() {
         <path d="M9 8V6.5a3 3 0 0 1 6 0V8" />
       </svg>
       {count > 0 ? (
-        <span className="absolute top-0.5 right-0.5 flex min-w-5 items-center justify-center rounded-full bg-honey px-1 text-xs leading-5 font-bold text-white">
+        <span className="absolute top-0.5 right-0.5 flex min-w-5 items-center justify-center rounded-full bg-gold px-1 text-xs leading-5 font-bold text-foreground">
           {count}
         </span>
       ) : null}

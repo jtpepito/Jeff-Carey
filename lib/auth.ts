@@ -1,5 +1,5 @@
 // Web Crypto only, so this runs both in middleware and in server actions.
-export const SESSION_COOKIE = "bl_admin";
+export const SESSION_COOKIE = "jc_admin";
 export const SESSION_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
 const enc = new TextEncoder();

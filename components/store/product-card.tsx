@@ -17,7 +17,7 @@ export function ProductCard({ product, sizes = "(min-width: 768px) 25vw, 50vw" }
         {soldOut ? (
           <span className="absolute top-3 left-3 rounded-full bg-foreground px-3 py-1 text-xs font-semibold text-background">Sold out</span>
         ) : product.compareAt ? (
-          <span className="absolute top-3 left-3 rounded-full bg-honey px-3 py-1 text-xs font-semibold text-white">Sale</span>
+          <span className="absolute top-3 left-3 rounded-full bg-gold px-3 py-1 text-xs font-semibold text-foreground">Sale</span>
         ) : null}
       </div>
       <div className="mt-3">

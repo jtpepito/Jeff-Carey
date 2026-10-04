@@ -36,7 +36,7 @@ export default function ProductsPage() {
                         {p.category} · {p.variants.length} {p.variants.length === 1 ? "variant" : "variants"} · {stock} in stock
                       </span>
                       <span className="mt-1 flex flex-wrap gap-1.5">
-                        {p.featured ? <span className="rounded-full bg-honey/15 px-2 py-0.5 text-xs font-semibold text-[#8a4a10]">Featured</span> : null}
+                        {p.featured ? <span className="rounded-full bg-gold/15 px-2 py-0.5 text-xs font-semibold text-[#5f4a0c]">Featured</span> : null}
                         {!p.active ? <span className="rounded-full bg-[#eee6e2] px-2 py-0.5 text-xs font-semibold text-[#6f5a52]">Inactive</span> : null}
                       </span>
                     </span>

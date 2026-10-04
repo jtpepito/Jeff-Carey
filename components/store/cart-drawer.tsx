@@ -23,7 +23,7 @@ export function CartDrawer() {
 
         <div className="flex-1 overflow-y-auto px-5 py-4">
           {notices.length > 0 ? (
-            <ul role="status" className="mb-4 space-y-1 rounded-2xl border border-honey/40 bg-honey/10 px-4 py-3 text-sm">
+            <ul role="status" className="mb-4 space-y-1 rounded-2xl border border-gold/40 bg-gold/10 px-4 py-3 text-sm">
               {notices.map((n) => (
                 <li key={n}>{n}</li>
               ))}

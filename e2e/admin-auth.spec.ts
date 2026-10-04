@@ -22,7 +22,7 @@ test("wrong password is refused, right password signs in, sign out works", async
 });
 
 test("a forged session cookie is rejected", async ({ page, context }) => {
-  await context.addCookies([{ name: "bl_admin", value: `${Date.now() + 100000}.deadbeef`, url: "http://localhost:3218" }]);
+  await context.addCookies([{ name: "jc_admin", value: `${Date.now() + 100000}.deadbeef`, url: "http://localhost:3218" }]);
   await page.goto("/admin/orders");
   await expect(page).toHaveURL(/\/admin\/login$/);
 });

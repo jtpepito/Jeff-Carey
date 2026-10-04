@@ -8,7 +8,7 @@ beforeEach(setupShop);
 
 test("places an order: totals, status, code, stock decrement, snapshots", () => {
   const r = placeOrder(order({ lines: [{ variantId: ids.v250, qty: 2 }] }), NOW);
-  expect(r).toEqual({ ok: true, code: "BL-2610-0001" });
+  expect(r).toEqual({ ok: true, code: "JC-2610-0001" });
   const o = getDb().prepare("SELECT * FROM orders").get() as Record<string, unknown>;
   expect(o).toMatchObject({ subtotal: 100000, shipping_fee: 8000, total: 108000, status: "new", gcash_ref: null, created_at: NOW.toISOString() });
   expect(stock(ids.v250)).toBe(3);
@@ -92,8 +92,8 @@ test("retrying with the same request id returns the first order instead of makin
   const input = order({ requestId: "req-abc-123", lines: [{ variantId: ids.v250, qty: 2 }] });
   const first = placeOrder(input, NOW);
   const again = placeOrder(input, NOW);
-  expect(first).toEqual({ ok: true, code: "BL-2610-0001" });
+  expect(first).toEqual({ ok: true, code: "JC-2610-0001" });
   expect(again).toEqual(first);
   expect([orderCount(), stock(ids.v250)]).toEqual([1, 3]);
-  expect(placeOrder(order({ requestId: "req-other" }), NOW)).toEqual({ ok: true, code: "BL-2610-0002" });
+  expect(placeOrder(order({ requestId: "req-other" }), NOW)).toEqual({ ok: true, code: "JC-2610-0002" });
 });
