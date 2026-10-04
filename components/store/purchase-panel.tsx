@@ -3,6 +3,7 @@
 import { useState } from "react";
 import type { Product } from "@/lib/products";
 import { cn } from "@/lib/utils";
+import { useCart } from "./cart-provider";
 import { QtyStepper } from "./qty-stepper";
 
 export function PurchasePanel({ product }: { product: Product }) {
@@ -11,6 +12,17 @@ export function PurchasePanel({ product }: { product: Product }) {
   const [qty, setQty] = useState(1);
   const variant = product.variants.find((v) => v.id === variantId) ?? null;
   const soldOut = !firstInStock;
+  const cart = useCart();
+
+  function addToCart() {
+    if (!variant) return;
+    cart.add({
+      variantId: variant.id, qty, productName: product.name, variantName: variant.name, slug: product.slug,
+      price: product.price, image: product.images[0] ?? null, stock: variant.stock,
+    });
+    setQty(1);
+    cart.open();
+  }
 
   return (
     <div className="mt-6">
@@ -44,7 +56,7 @@ export function PurchasePanel({ product }: { product: Product }) {
 
       <div className="mt-6 flex items-center gap-3">
         <QtyStepper qty={qty} max={variant?.stock ?? 1} onChange={setQty} />
-        <button type="button" disabled={soldOut || !variant} className="btn btn-primary flex-1">
+        <button type="button" onClick={addToCart} disabled={soldOut || !variant} className="btn btn-primary flex-1">
           {soldOut ? "Sold out" : "Add to cart"}
         </button>
       </div>
