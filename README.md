@@ -63,6 +63,10 @@ Stop any running dev or production server before `npm run build` or `npm run e2e
 - **Dates**: timestamps are stored in UTC; "today" and order-code months use Asia/Manila.
 - **Order codes** look like `JC-2610-0001`: prefix, year and month, then a counter that restarts
   each month.
+- **Recipe costing**: `/admin/ingredients` holds the packs you buy (size and price); each product has
+  a recipe (batch yield, ingredient lines, labour minutes, packaging per unit) under
+  `/admin/products/<id>/recipe`. Cost per unit = (ingredients + labour) ÷ yield + packaging, with labour
+  priced from the "Labour rate per hour" setting. Cost and margin show on the product page and list.
 - **Pickup**: shoppers can choose pickup at checkout (no address, no delivery fee). The pickup
   address and hours shown to them are the "Pickup details" field in `/admin/settings`.
 - **Delivery area**: `deliveryProvinces` in `lib/brand.ts` (currently Cebu only; an empty list means

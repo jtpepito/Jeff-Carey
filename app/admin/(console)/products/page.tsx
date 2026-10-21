@@ -4,11 +4,13 @@ import Link from "next/link";
 import { AdminEmpty } from "@/components/admin/admin-empty";
 import { formatPeso } from "@/lib/money";
 import { listProducts } from "@/lib/products";
+import { productCosts } from "@/lib/recipes";
 
 export const metadata: Metadata = { title: "Products" };
 
 export default function ProductsPage() {
   const products = listProducts({ includeInactive: true });
+  const costs = productCosts();
   return (
     <>
       <div className="flex items-center justify-between gap-4">
@@ -22,6 +24,7 @@ export default function ProductsPage() {
           <ul className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
             {products.map((p) => {
               const stock = p.variants.reduce((sum, v) => sum + v.stock, 0);
+              const cost = costs.get(p.id);
               return (
                 <li key={p.id}>
                   <Link href={`/admin/products/${p.id}`} className="flex items-center gap-4 px-4 py-3 hover:bg-muted/60">
@@ -40,7 +43,12 @@ export default function ProductsPage() {
                         {!p.active ? <span className="rounded-full bg-[#eee6e2] px-2 py-0.5 text-xs font-semibold text-[#6f5a52]">Inactive</span> : null}
                       </span>
                     </span>
-                    <span className="font-semibold tabular-nums">{formatPeso(p.price)}</span>
+                    <span className="text-right">
+                      <span className="block font-semibold tabular-nums">{formatPeso(p.price)}</span>
+                      <span className="block text-xs text-muted-foreground tabular-nums">
+                        {cost === undefined ? "No recipe" : `Cost ${formatPeso(cost)} · ${p.price > 0 ? Math.round(((p.price - cost) / p.price) * 100) : 0}% margin`}
+                      </span>
+                    </span>
                   </Link>
                 </li>
               );

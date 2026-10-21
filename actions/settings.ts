@@ -6,10 +6,10 @@ import { parsePeso } from "@/lib/money";
 import { updateSettings, type Settings } from "@/lib/settings";
 
 export type SettingsFormValues = {
-  freeShippingThreshold: string; gcashNumber: string; feeNcr: string; feeLuzon: string; feeVismin: string; pickupInfo: string;
+  freeShippingThreshold: string; gcashNumber: string; feeNcr: string; feeLuzon: string; feeVismin: string; pickupInfo: string; labourRate: string;
 };
 
-const MONEY_FIELDS = ["freeShippingThreshold", "feeNcr", "feeLuzon", "feeVismin"] as const;
+const MONEY_FIELDS = ["freeShippingThreshold", "feeNcr", "feeLuzon", "feeVismin", "labourRate"] as const;
 
 export async function saveSettings(
   values: SettingsFormValues,

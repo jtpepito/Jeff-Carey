@@ -54,6 +54,29 @@ CREATE TABLE IF NOT EXISTS order_items (
   qty INTEGER NOT NULL CHECK (qty > 0)
 );
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL);
+CREATE TABLE IF NOT EXISTS ingredients (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  name TEXT NOT NULL,
+  unit TEXT NOT NULL,
+  pack_qty REAL NOT NULL CHECK (pack_qty > 0),
+  pack_cost INTEGER NOT NULL CHECK (pack_cost >= 0)
+);
+CREATE TABLE IF NOT EXISTS recipes (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  product_id INTEGER NOT NULL UNIQUE REFERENCES products(id) ON DELETE CASCADE,
+  yield INTEGER NOT NULL CHECK (yield >= 1),
+  labour_minutes INTEGER NOT NULL DEFAULT 0 CHECK (labour_minutes >= 0),
+  packaging_cost INTEGER NOT NULL DEFAULT 0 CHECK (packaging_cost >= 0),
+  notes TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS recipe_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  ingredient_id INTEGER NOT NULL REFERENCES ingredients(id),
+  qty REAL NOT NULL CHECK (qty > 0)
+);
+CREATE INDEX IF NOT EXISTS idx_recipe_items_recipe ON recipe_items(recipe_id);
+CREATE INDEX IF NOT EXISTS idx_recipe_items_ingredient ON recipe_items(ingredient_id);
 CREATE INDEX IF NOT EXISTS idx_variants_product ON variants(product_id);
 CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at);
 CREATE INDEX IF NOT EXISTS idx_items_order ON order_items(order_id);

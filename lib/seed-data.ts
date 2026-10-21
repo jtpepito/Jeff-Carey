@@ -1,6 +1,7 @@
 import { getDb } from "./db";
 import { changeStatus, getOrderByCode, placeOrder, type OrderStatus } from "./orders";
 import { createProduct, listProducts, type ProductInput } from "./products";
+import { saveIngredient, saveRecipe } from "./recipes";
 
 const img = (id: string) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=1200&q=70`;
 const peso = (n: number) => n * 100;
@@ -131,13 +132,39 @@ const ORDERS: SeedOrder[] = [
   { daysAgo: 1, name: "Trisha Navarro", mobile: "09151230015", province: "Cebu", city: "Talisay City", address: "Blk 12 Lot 3, Lawaan 2", notes: "Call before delivery, please.", status: "new", items: [["butter-cookie-tin", "Sea salt", 1], ["hokkaido-milk-loaf", "Cheese", 1], ["red-velvet-cupcakes", "Cream cheese frosting", 2]] },
 ];
 
+// Pack you buy: [name, unit, pack size, pack price in pesos].
+const INGREDIENTS: [string, string, number, number][] = [
+  ["Bread flour", "g", 1000, 48], ["All-purpose flour", "g", 1000, 42], ["White sugar", "g", 1000, 65],
+  ["Brown sugar", "g", 1000, 75], ["Powdered sugar", "g", 1000, 85], ["Butter", "g", 1000, 420],
+  ["Eggs", "pc", 1, 9], ["Fresh milk", "ml", 1000, 95], ["Whipping cream", "ml", 1000, 390],
+  ["Cream cheese", "g", 1000, 480], ["Instant yeast", "g", 500, 180], ["Baking powder", "g", 250, 70],
+  ["Salt", "g", 1000, 25], ["Cinnamon", "g", 100, 120], ["Vanilla extract", "ml", 100, 180],
+  ["Cocoa powder", "g", 500, 260], ["Dark chocolate", "g", 1000, 520], ["Chocolate chips", "g", 1000, 480],
+  ["Vegetable oil", "ml", 1000, 110], ["Sprinkles", "g", 500, 220], ["Graham crackers", "g", 1000, 160],
+  ["Blueberry compote", "g", 1000, 450], ["Red food colour", "ml", 30, 60],
+];
+
+// Per batch: yield in product units (boxes or cakes), labour minutes, packaging pesos per unit, ingredient grams/ml/pieces.
+const RECIPES: { slug: string; yield: number; labour: number; packaging: number; notes: string; items: [string, number][] }[] = [
+  { slug: "classic-cinnamon-rolls", yield: 3, labour: 90, packaging: 15, notes: "Proof the dough overnight in the ref. Bake at 180°C for 22 minutes.",
+    items: [["Bread flour", 750], ["White sugar", 100], ["Brown sugar", 150], ["Butter", 180], ["Eggs", 2], ["Fresh milk", 300], ["Instant yeast", 7], ["Cinnamon", 20], ["Salt", 5], ["Powdered sugar", 120]] },
+  { slug: "sprinkle-donuts", yield: 4, labour: 120, packaging: 12, notes: "Fry at 175°C, 90 seconds a side. Glaze while warm.",
+    items: [["All-purpose flour", 1000], ["White sugar", 120], ["Butter", 60], ["Eggs", 3], ["Fresh milk", 350], ["Instant yeast", 10], ["Vegetable oil", 500], ["Dark chocolate", 200], ["Sprinkles", 60], ["Powdered sugar", 150], ["Salt", 5]] },
+  { slug: "chocolate-chunk-cookies", yield: 6, labour: 60, packaging: 10, notes: "Chill the dough 1 hour. Bake at 175°C for 12 minutes.",
+    items: [["All-purpose flour", 600], ["Butter", 450], ["Brown sugar", 300], ["White sugar", 150], ["Eggs", 2], ["Vanilla extract", 10], ["Baking powder", 6], ["Salt", 5], ["Chocolate chips", 500]] },
+  { slug: "blueberry-cheesecake", yield: 2, labour: 120, packaging: 35, notes: "Water bath at 160°C for 55 minutes, then chill overnight.",
+    items: [["Cream cheese", 1000], ["White sugar", 250], ["Eggs", 4], ["Whipping cream", 250], ["Graham crackers", 300], ["Butter", 120], ["Blueberry compote", 400], ["Vanilla extract", 10]] },
+  { slug: "red-velvet-cupcakes", yield: 6, labour: 90, packaging: 12, notes: "Bake at 170°C for 18 minutes. Frost only when fully cool.",
+    items: [["All-purpose flour", 500], ["White sugar", 350], ["Cocoa powder", 25], ["Vegetable oil", 250], ["Eggs", 2], ["Fresh milk", 250], ["Red food colour", 20], ["Baking powder", 8], ["Cream cheese", 400], ["Butter", 150], ["Powdered sugar", 400], ["Vanilla extract", 10]] },
+];
+
 const PATH: OrderStatus[] = ["confirmed", "shipped", "delivered"];
 const DAY_MS = 24 * 60 * 60 * 1000;
 
 /** Wipes every table, then fills the shop with demo products and historical orders. */
 export function seed(now: Date = new Date()): void {
   const db = getDb();
-  db.exec("DELETE FROM order_items; DELETE FROM orders; DELETE FROM variants; DELETE FROM products; DELETE FROM settings;");
+  db.exec("DELETE FROM order_items; DELETE FROM orders; DELETE FROM variants; DELETE FROM products; DELETE FROM recipe_items; DELETE FROM recipes; DELETE FROM ingredients; DELETE FROM settings;");
 
   for (const p of PRODUCTS) {
     const r = createProduct({
@@ -147,6 +174,21 @@ export function seed(now: Date = new Date()): void {
       variants: p.variants.map(([name, stock, sku]) => ({ name, stock, sku })),
     });
     if (!r.ok) throw new Error(`Seed product ${p.slug}: ${r.error}`);
+  }
+
+  const ingredientId = new Map<string, number>();
+  for (const [name, unit, packQty, pesos] of INGREDIENTS) {
+    const r = saveIngredient(null, { name, unit, packQty, packCost: peso(pesos) });
+    if (!r.ok) throw new Error(`Seed ingredient ${name}: ${r.error}`);
+    ingredientId.set(name, r.id);
+  }
+  const productId = new Map(listProducts().map((p) => [p.slug, p.id]));
+  for (const r of RECIPES) {
+    const saved = saveRecipe(productId.get(r.slug)!, {
+      yield: r.yield, labourMinutes: r.labour, packagingCost: peso(r.packaging), notes: r.notes,
+      items: r.items.map(([name, qty]) => ({ ingredientId: ingredientId.get(name)!, qty })),
+    });
+    if (!saved.ok) throw new Error(`Seed recipe ${r.slug}: ${saved.error}`);
   }
 
   const variantId = new Map<string, number>();

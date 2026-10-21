@@ -13,6 +13,7 @@ const FIELDS: Field[] = [
   { name: "feeLuzon", label: "Luzon shipping fee", hint: "Luzon provinces outside Metro Manila.", money: true, group: "luzon" },
   { name: "feeVismin", label: "Visayas / Mindanao shipping fee", hint: "All Visayas and Mindanao provinces.", money: true, group: "vismin" },
   { name: "gcashNumber", label: "GCash number", hint: "Shown at checkout when a customer chooses GCash.", money: false },
+  { name: "labourRate", label: "Labour rate per hour", hint: "Used to cost the labour minutes in each recipe.", money: true },
   { name: "pickupInfo", label: "Pickup details", hint: "Shown at checkout and on the receipt when a customer chooses pickup: the address and the hours.", money: false },
 ];
 

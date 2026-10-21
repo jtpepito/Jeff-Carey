@@ -18,6 +18,7 @@ export default function SettingsPage() {
           freeShippingThreshold: pesoInputValue(s.freeShippingThreshold),
           gcashNumber: s.gcashNumber,
           pickupInfo: s.pickupInfo,
+          labourRate: pesoInputValue(s.labourRate),
           feeNcr: pesoInputValue(s.feeNcr),
           feeLuzon: pesoInputValue(s.feeLuzon),
           feeVismin: pesoInputValue(s.feeVismin),

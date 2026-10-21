@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { CostingCard } from "@/components/admin/costing-card";
 import { ProductForm } from "@/components/admin/product-form";
 import { pesoInputValue } from "@/lib/money";
 import { getProductById, listProducts } from "@/lib/products";
+import { getRecipe } from "@/lib/recipes";
 
 export const metadata: Metadata = { title: "Edit product" };
 
@@ -14,6 +16,9 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
   return (
     <>
       <h1 className="text-3xl">{product.name}</h1>
+      <div className="mt-5">
+        <CostingCard productId={product.id} price={product.price} recipe={getRecipe(product.id)} />
+      </div>
       <ProductForm
         // Remount with fresh values when stock or details change elsewhere. "active" is left out so the
         // form survives its own deactivate-on-delete and can keep showing the notice.

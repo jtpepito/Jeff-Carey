@@ -5,6 +5,8 @@ export type Settings = {
   feeNcr: number; feeLuzon: number; feeVismin: number;
   /** Shown to shoppers who choose pickup: where and when to collect. */
   pickupInfo: string;
+  /** Centavos per hour, used to price the labour minutes in a recipe. */
+  labourRate: number;
 };
 
 const TEXT_SETTINGS = new Set<keyof Settings>(["gcashNumber", "pickupInfo"]);
@@ -13,12 +15,14 @@ const KEYS: Record<keyof Settings, string> = {
   freeShippingThreshold: "free_shipping_threshold", gcashNumber: "gcash_number",
   feeNcr: "shipping_fee_ncr", feeLuzon: "shipping_fee_luzon", feeVismin: "shipping_fee_vismin",
   pickupInfo: "pickup_info",
+  labourRate: "labour_rate",
 };
 
 const DEFAULTS: Settings = {
   freeShippingThreshold: 150000, gcashNumber: "0917 000 0000",
   feeNcr: 8000, feeLuzon: 12000, feeVismin: 16000,
   pickupInfo: "We'll text you the pickup address and time once your order is confirmed.",
+  labourRate: 8000,
 };
 
 export function getSettings(): Settings {

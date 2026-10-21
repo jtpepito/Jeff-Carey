@@ -2,6 +2,7 @@ import { beforeEach, expect, test } from "vitest";
 import { getDb } from "@/lib/db";
 import { listOrders } from "@/lib/orders";
 import { listCategories, listProducts } from "@/lib/products";
+import { listIngredients, productCosts } from "@/lib/recipes";
 import { seed } from "@/lib/seed-data";
 import { freshDb } from "./helpers";
 
@@ -14,6 +15,10 @@ test("seed creates 12 products in 3 categories and 15 mixed-status orders", () =
   expect(listProducts().filter((p) => p.featured)).toHaveLength(4);
   const orders = listOrders();
   expect(orders).toHaveLength(15);
+  expect(listIngredients().length).toBeGreaterThanOrEqual(20);
+  const costs = productCosts();
+  expect(costs.size).toBe(5);
+  for (const p of listProducts()) if (costs.has(p.id)) expect(costs.get(p.id)!).toBeLessThan(p.price);
   expect(new Set(orders.map((o) => o.status)).size).toBe(5);
   for (const o of orders) expect(o.total).toBe(o.subtotal + o.shippingFee);
   const gcash = orders.filter((o) => o.paymentMethod === "gcash");
