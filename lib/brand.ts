@@ -10,7 +10,7 @@ export const brand = {
   heroHeadline: "Frozen dough. Baked when you order.",
   tagline: "Cinnamon rolls and cupcakes, baked only when your order comes in.",
   promise: "We mix and freeze the dough in small batches, then bake it only when your order comes in. Nothing sits on a shelf.",
-  storyHeadline: "Mixed ahead. Baked to order."
+  storyHeadline: "Mixed ahead. Baked to order.",
   story: [
     "Jef&Carey started with a tray of cinnamon rolls baked for a neighbour's birthday. The neighbour asked for two more trays the following week.",
     "We still make it the same way: real butter, dough proofed overnight, then frozen in small batches so it keeps its best. It only goes into the oven when your order comes in.",
