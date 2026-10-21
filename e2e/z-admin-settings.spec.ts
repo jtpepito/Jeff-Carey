@@ -20,9 +20,9 @@ test("settings change the storefront", async ({ page }) => {
   await page.getByRole("button", { name: "Save settings" }).click();
   await expect(page.getByText("Settings saved")).toBeVisible();
 
-  await page.goto("/product/chocolate-berry-cake"); // ₱520
+  await page.goto("/product/og-cinnamon-rolls"); // Box of 4 ₱231
   await page.getByRole("button", { name: "Add to cart" }).click();
-  await expect(page.getByRole("dialog")).toContainText("₱1,480 away from free shipping");
+  await expect(page.getByRole("dialog")).toContainText("₱1,769 away from free shipping");
   await page.getByRole("dialog").getByRole("link", { name: /checkout/i }).click();
   await expect(page.getByTestId("summary")).toContainText("₱95");
   await page.getByLabel("GCash", { exact: true }).check();

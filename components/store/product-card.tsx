@@ -1,10 +1,12 @@
 import Link from "next/link";
 import { formatPeso } from "@/lib/money";
+import { priceRange } from "@/lib/pricing";
 import type { Product } from "@/lib/products";
 import { ProductImage } from "./product-image";
 
 export function ProductCard({ product, sizes = "(min-width: 768px) 25vw, 50vw" }: { product: Product; sizes?: string }) {
   const soldOut = product.variants.every((v) => v.stock === 0);
+  const range = priceRange(product);
   return (
     <Link href={`/product/${product.slug}`} data-testid="product-card" className="group block">
       <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-muted">
@@ -24,8 +26,9 @@ export function ProductCard({ product, sizes = "(min-width: 768px) 25vw, 50vw" }
         <p className="text-xs text-muted-foreground">{product.category}</p>
         <h3 className="mt-0.5 text-[17px] leading-snug font-medium">{product.name}</h3>
         <p className="mt-1 text-[15px] font-semibold">
-          {formatPeso(product.price)}
-          {product.compareAt ? (
+          {range.min !== range.max ? <span className="font-normal text-muted-foreground">from </span> : null}
+          {formatPeso(range.min)}
+          {product.compareAt && product.compareAt > range.min ? (
             <s className="ml-2 font-normal text-muted-foreground">{formatPeso(product.compareAt)}</s>
           ) : null}
         </p>

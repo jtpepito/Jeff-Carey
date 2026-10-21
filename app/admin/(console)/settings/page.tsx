@@ -19,6 +19,7 @@ export default function SettingsPage() {
           gcashNumber: s.gcashNumber,
           pickupInfo: s.pickupInfo,
           labourRate: pesoInputValue(s.labourRate),
+          targetMarkup: String(s.targetMarkup),
           feeNcr: pesoInputValue(s.feeNcr),
           feeLuzon: pesoInputValue(s.feeLuzon),
           feeVismin: pesoInputValue(s.feeVismin),

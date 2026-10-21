@@ -7,6 +7,8 @@ export type Settings = {
   pickupInfo: string;
   /** Centavos per hour, used to price the labour minutes in a recipe. */
   labourRate: number;
+  /** Suggested price = cost before packaging × this, plus packaging. */
+  targetMarkup: number;
 };
 
 const TEXT_SETTINGS = new Set<keyof Settings>(["gcashNumber", "pickupInfo"]);
@@ -16,6 +18,7 @@ const KEYS: Record<keyof Settings, string> = {
   feeNcr: "shipping_fee_ncr", feeLuzon: "shipping_fee_luzon", feeVismin: "shipping_fee_vismin",
   pickupInfo: "pickup_info",
   labourRate: "labour_rate",
+  targetMarkup: "target_markup",
 };
 
 const DEFAULTS: Settings = {
@@ -23,6 +26,7 @@ const DEFAULTS: Settings = {
   feeNcr: 8000, feeLuzon: 12000, feeVismin: 16000,
   pickupInfo: "We'll text you the pickup address and time once your order is confirmed.",
   labourRate: 8000,
+  targetMarkup: 5,
 };
 
 export function getSettings(): Settings {

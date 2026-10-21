@@ -4,6 +4,7 @@ import { ProductCard } from "@/components/store/product-card";
 import { ProductImage } from "@/components/store/product-image";
 import { brand } from "@/lib/brand";
 import { formatPeso } from "@/lib/money";
+import { priceRange } from "@/lib/pricing";
 import { listCategories, listProducts } from "@/lib/products";
 
 export default function HomePage() {
@@ -49,8 +50,8 @@ export default function HomePage() {
                 <div>
                   <p className="font-heading text-2xl">{hero.name}</p>
                   <p className="text-[15px]">
-                    {formatPeso(hero.price)}
-                    {hero.compareAt ? <s className="ml-2 opacity-75">{formatPeso(hero.compareAt)}</s> : null}
+                    {priceRange(hero).min !== priceRange(hero).max ? "from " : ""}{formatPeso(priceRange(hero).min)}
+                    {hero.compareAt && hero.compareAt > priceRange(hero).min ? <s className="ml-2 opacity-75">{formatPeso(hero.compareAt)}</s> : null}
                   </p>
                 </div>
                 <span className="btn btn-light shrink-0 md:hidden">Shop now</span>

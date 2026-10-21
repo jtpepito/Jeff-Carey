@@ -133,3 +133,10 @@ test("pickup still needs a name, a mobile number and, for GCash, a reference", (
   expect(placeOrder(order({ fulfilment: "pickup", mobile: "123" }), NOW)).toMatchObject({ ok: false, field: "mobile" });
   expect(placeOrder(order({ fulfilment: "pickup", paymentMethod: "gcash" }), NOW)).toMatchObject({ ok: false, field: "gcashRef" });
 });
+
+test("an option with its own price is charged at that price", () => {
+  updateProduct(ids.productId, { ...product, variants: [{ id: ids.v250, name: "250g", stock: 5, sku: "", price: 12345 }, { id: ids.v500, name: "500g", stock: 1, sku: "" }] });
+  placeOrder(order({ lines: [{ variantId: ids.v250, qty: 2 }, { variantId: ids.v500, qty: 1 }] }), NOW);
+  expect(getDb().prepare("SELECT price_snapshot, qty FROM order_items ORDER BY id").all()).toEqual([{ price_snapshot: 12345, qty: 2 }, { price_snapshot: 50000, qty: 1 }]);
+  expect((getDb().prepare("SELECT subtotal s FROM orders").get() as { s: number }).s).toBe(12345 * 2 + 50000);
+});

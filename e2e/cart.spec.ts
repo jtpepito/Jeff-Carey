@@ -1,27 +1,26 @@
 import { expect, test } from "@playwright/test";
 
 test("add to cart, change qty, free-shipping bar, persistence", async ({ page }) => {
-  await page.goto("/product/classic-cinnamon-rolls"); // ₱480
+  await page.goto("/product/og-cinnamon-rolls"); // Box of 4 ₱231
   await page.getByRole("button", { name: "Add to cart" }).click();
   const drawer = page.getByRole("dialog");
-  await expect(drawer).toContainText("Classic Cinnamon Rolls");
-  await expect(drawer).toContainText("₱1,020 away from free shipping");
+  await expect(drawer).toContainText("OG Cinnamon Rolls");
+  await expect(drawer).toContainText("₱1,269 away from free shipping");
   await drawer.getByRole("button", { name: "Increase quantity" }).click();
-  await expect(drawer).toContainText("₱540 away from free shipping");
+  await expect(drawer).toContainText("₱1,038 away from free shipping");
   await page.reload();
   await expect(page.getByRole("button", { name: "Open cart" })).toContainText("2");
 });
 
 test("free-shipping message appears at the threshold", async ({ page }) => {
-  await page.goto("/product/blueberry-cheesecake"); // ₱650 x 3 = ₱1,950
-  await page.getByRole("button", { name: "Increase quantity" }).click();
-  await page.getByRole("button", { name: "Increase quantity" }).click();
+  await page.goto("/product/choco-cinnamon-rolls"); // Box of 4 ₱313 x 5 = ₱1,565
+  for (let i = 0; i < 4; i++) await page.getByRole("button", { name: "Increase quantity" }).click();
   await page.getByRole("button", { name: "Add to cart" }).click();
   await expect(page.getByRole("dialog")).toContainText("You've unlocked free shipping");
 });
 
 test("removing the last item shows the empty cart", async ({ page }) => {
-  await page.goto("/product/sprinkle-donuts");
+  await page.goto("/product/vanilla-cupcake");
   await page.getByRole("button", { name: "Add to cart" }).click();
   const drawer = page.getByRole("dialog");
   await drawer.getByRole("button", { name: /Remove/ }).click();
@@ -48,14 +47,14 @@ test("corrupt or stale cart storage does not crash the site", async ({ page }) =
 });
 
 test("adding a second product keeps both in the cart", async ({ page }) => {
-  await page.goto("/product/classic-cinnamon-rolls");
+  await page.goto("/product/og-cinnamon-rolls");
   await page.getByRole("button", { name: "Add to cart" }).click();
-  await expect(page.getByRole("dialog")).toContainText("Classic Cinnamon Rolls");
-  await page.goto("/product/chocolate-cupcakes");
+  await expect(page.getByRole("dialog")).toContainText("OG Cinnamon Rolls");
+  await page.goto("/product/vanilla-cupcake");
   await page.getByRole("button", { name: "Add to cart" }).click();
   const drawer = page.getByRole("dialog");
-  await expect(drawer).toContainText("Chocolate Cupcakes");
-  await expect(drawer).toContainText("Classic Cinnamon Rolls");
-  await expect(drawer).toContainText("₱930");
+  await expect(drawer).toContainText("Vanilla Cupcake");
+  await expect(drawer).toContainText("OG Cinnamon Rolls");
+  await expect(drawer).toContainText("₱331");
   await expect(drawer).not.toContainText("no longer available");
 });

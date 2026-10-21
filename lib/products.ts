@@ -1,6 +1,7 @@
 import { getDb, tx } from "./db";
 
-export type Variant = { id: number; productId: number; name: string; stock: number; sku: string };
+/** price is an override in centavos; null means the product price applies. */
+export type Variant = { id: number; productId: number; name: string; stock: number; sku: string; price: number | null };
 export type Product = {
   id: number; slug: string; name: string; category: string; description: string; howToUse: string;
   price: number; compareAt: number | null; images: string[]; featured: boolean; active: boolean;
@@ -8,7 +9,7 @@ export type Product = {
 };
 export type ProductInput = Omit<Product, "id" | "variants"> & {
   /** stockWas is the stock the edit form loaded. With it, a save applies only the difference, so units sold meanwhile are not put back. */
-  variants: { id?: number; name: string; stock: number; sku: string; stockWas?: number }[];
+  variants: { id?: number; name: string; stock: number; sku: string; stockWas?: number; price?: number | null }[];
 };
 export type SaveResult = { ok: true; id: number } | { ok: false; error: string; field: string };
 export type CartLineInfo = {
@@ -21,7 +22,7 @@ type ProductRow = {
   id: number; slug: string; name: string; category: string; description: string; how_to_use: string;
   price: number; compare_at: number | null; images: string; featured: number; active: number;
 };
-type VariantRow = { id: number; product_id: number; name: string; stock: number; sku: string };
+type VariantRow = { id: number; product_id: number; name: string; stock: number; sku: string; price: number | null };
 
 function parseImages(json: string): string[] {
   try {
@@ -36,7 +37,7 @@ function hydrate(rows: ProductRow[]): Product[] {
   if (rows.length === 0) return [];
   const marks = rows.map(() => "?").join(",");
   const variants = getDb()
-    .prepare(`SELECT id, product_id, name, stock, sku FROM variants WHERE product_id IN (${marks}) ORDER BY id`)
+    .prepare(`SELECT id, product_id, name, stock, sku, price FROM variants WHERE product_id IN (${marks}) ORDER BY id`)
     .all(...rows.map((r) => r.id)) as VariantRow[];
   return rows.map((r) => ({
     id: r.id, slug: r.slug, name: r.name, category: r.category, description: r.description,
@@ -44,7 +45,7 @@ function hydrate(rows: ProductRow[]): Product[] {
     featured: r.featured === 1, active: r.active === 1,
     variants: variants
       .filter((v) => v.product_id === r.id)
-      .map((v) => ({ id: v.id, productId: v.product_id, name: v.name, stock: v.stock, sku: v.sku })),
+      .map((v) => ({ id: v.id, productId: v.product_id, name: v.name, stock: v.stock, sku: v.sku, price: v.price })),
   }));
 }
 
@@ -103,6 +104,8 @@ function validate(input: ProductInput, selfId: number | null): { field: string; 
     if (!v.name?.trim()) return { field: "variants", error: "Every variant needs a name." };
     if (!Number.isInteger(v.stock) || v.stock < 0)
       return { field: "variants", error: "Stock must be a whole number, 0 or more." };
+    if (v.price != null && (!Number.isInteger(v.price) || v.price < 0))
+      return { field: "variants", error: "An option price must be a whole amount, 0 or more, or left blank." };
   }
   return null;
 }
@@ -125,8 +128,8 @@ export function createProduct(input: ProductInput): SaveResult {
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       ).run(...columns(input)).lastInsertRowid,
     );
-    const add = db.prepare("INSERT INTO variants (product_id, name, stock, sku) VALUES (?, ?, ?, ?)");
-    for (const v of input.variants) add.run(id, v.name.trim(), v.stock, v.sku?.trim() ?? "");
+    const add = db.prepare("INSERT INTO variants (product_id, name, stock, sku, price) VALUES (?, ?, ?, ?, ?)");
+    for (const v of input.variants) add.run(id, v.name.trim(), v.stock, v.sku?.trim() ?? "", v.price ?? null);
     return { ok: true as const, id };
   });
 }
@@ -146,15 +149,15 @@ export function updateProduct(id: number, input: ProductInput): SaveResult {
     const del = db.prepare("DELETE FROM variants WHERE id = ?");
     for (const vid of existing) if (!kept.has(vid)) del.run(vid);
 
-    const upd = db.prepare("UPDATE variants SET name = ?, stock = ?, sku = ? WHERE id = ?");
-    const updByDiff = db.prepare("UPDATE variants SET name = ?, stock = MAX(0, stock + ?), sku = ? WHERE id = ?");
-    const add = db.prepare("INSERT INTO variants (product_id, name, stock, sku) VALUES (?, ?, ?, ?)");
+    const upd = db.prepare("UPDATE variants SET name = ?, stock = ?, sku = ?, price = ? WHERE id = ?");
+    const updByDiff = db.prepare("UPDATE variants SET name = ?, stock = MAX(0, stock + ?), sku = ?, price = ? WHERE id = ?");
+    const add = db.prepare("INSERT INTO variants (product_id, name, stock, sku, price) VALUES (?, ?, ?, ?, ?)");
     for (const v of input.variants) {
       if (v.id != null && kept.has(v.id)) {
-        if (Number.isInteger(v.stockWas)) updByDiff.run(v.name.trim(), v.stock - v.stockWas!, v.sku?.trim() ?? "", v.id);
-        else upd.run(v.name.trim(), v.stock, v.sku?.trim() ?? "", v.id);
+        if (Number.isInteger(v.stockWas)) updByDiff.run(v.name.trim(), v.stock - v.stockWas!, v.sku?.trim() ?? "", v.price ?? null, v.id);
+        else upd.run(v.name.trim(), v.stock, v.sku?.trim() ?? "", v.price ?? null, v.id);
       }
-      else add.run(id, v.name.trim(), v.stock, v.sku?.trim() ?? "");
+      else add.run(id, v.name.trim(), v.stock, v.sku?.trim() ?? "", v.price ?? null);
     }
     return { ok: true as const, id };
   });
@@ -178,7 +181,7 @@ export function cartLineInfo(variantIds: number[]): CartLineInfo[] {
   if (ids.length === 0) return [];
   const rows = getDb()
     .prepare(
-      `SELECT v.id AS variantId, p.name AS productName, v.name AS variantName, p.slug, p.price, v.stock, p.images
+      `SELECT v.id AS variantId, p.name AS productName, v.name AS variantName, p.slug, COALESCE(v.price, p.price) AS price, v.stock, p.images
        FROM variants v JOIN products p ON p.id = v.product_id
        WHERE p.active = 1 AND v.id IN (${ids.map(() => "?").join(",")}) ORDER BY v.id`,
     )

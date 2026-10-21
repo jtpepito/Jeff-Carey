@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { AdminEmpty } from "@/components/admin/admin-empty";
 import { formatPeso } from "@/lib/money";
+import { priceRange } from "@/lib/pricing";
 import { listProducts } from "@/lib/products";
 import { productCosts } from "@/lib/recipes";
 
@@ -44,9 +45,11 @@ export default function ProductsPage() {
                       </span>
                     </span>
                     <span className="text-right">
-                      <span className="block font-semibold tabular-nums">{formatPeso(p.price)}</span>
+                      <span className="block font-semibold tabular-nums">
+                        {priceRange(p).min === priceRange(p).max ? formatPeso(p.price) : `${formatPeso(priceRange(p).min)} – ${formatPeso(priceRange(p).max)}`}
+                      </span>
                       <span className="block text-xs text-muted-foreground tabular-nums">
-                        {cost === undefined ? "No recipe" : `Cost ${formatPeso(cost)} · ${p.price > 0 ? Math.round(((p.price - cost) / p.price) * 100) : 0}% margin`}
+                        {cost === undefined ? "No recipe" : cost.min === cost.max ? `Cost ${formatPeso(cost.min)}` : `Cost ${formatPeso(cost.min)} – ${formatPeso(cost.max)}`}
                       </span>
                     </span>
                   </Link>

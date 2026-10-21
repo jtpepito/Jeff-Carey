@@ -10,6 +10,7 @@ test("defaults apply on an empty database", () => {
     feeNcr: 8000, feeLuzon: 12000, feeVismin: 16000,
     pickupInfo: "We'll text you the pickup address and time once your order is confirmed.",
     labourRate: 8000,
+    targetMarkup: 5,
   });
 });
 

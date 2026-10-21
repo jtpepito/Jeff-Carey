@@ -6,7 +6,7 @@ import { parsePeso } from "@/lib/money";
 import { updateSettings, type Settings } from "@/lib/settings";
 
 export type SettingsFormValues = {
-  freeShippingThreshold: string; gcashNumber: string; feeNcr: string; feeLuzon: string; feeVismin: string; pickupInfo: string; labourRate: string;
+  freeShippingThreshold: string; gcashNumber: string; feeNcr: string; feeLuzon: string; feeVismin: string; pickupInfo: string; labourRate: string; targetMarkup: string;
 };
 
 const MONEY_FIELDS = ["freeShippingThreshold", "feeNcr", "feeLuzon", "feeVismin", "labourRate"] as const;
@@ -27,6 +27,10 @@ export async function saveSettings(
   const pickupInfo = String(values?.pickupInfo ?? "").trim();
   if (!pickupInfo) return { ok: false, field: "pickupInfo", error: "Tell customers where and when they can pick up." };
   patch.pickupInfo = pickupInfo.slice(0, 300);
+
+  const markup = Number(String(values?.targetMarkup ?? "").trim());
+  if (!(Number.isFinite(markup) && markup > 0)) return { ok: false, field: "targetMarkup", error: "Enter a multiplier above 0, like 5 or 3.5." };
+  patch.targetMarkup = markup;
 
   updateSettings(patch);
   revalidatePath("/", "layout");

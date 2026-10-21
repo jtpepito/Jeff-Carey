@@ -1,180 +1,135 @@
 import { getDb } from "./db";
 import { changeStatus, getOrderByCode, placeOrder, type OrderStatus } from "./orders";
 import { createProduct, listProducts, type ProductInput } from "./products";
-import { saveIngredient, saveRecipe } from "./recipes";
+import { applySuggestedPrice, saveComponent, saveIngredient, saveRecipe } from "./recipes";
+
+// Ingredient prices, recipes and packaging come from the owner's "Recipe Costing File.xlsx" (Oct 2026).
+// Photos are Unsplash stand-ins. Stock levels are placeholders.
 
 const img = (id: string) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=1200&q=70`;
-const peso = (n: number) => n * 100;
+const peso = (n: number) => Math.round(n * 100);
 
+type SeedVariant = [name: string, stock: number, sku: string, pieces: number, packagingPesos: number];
 type SeedProduct = Omit<ProductInput, "active" | "price" | "compareAt" | "images" | "variants"> & {
-  price: number; compareAt?: number; photos: string[]; variants: [name: string, stock: number, sku: string][];
+  photos: string[]; variants: SeedVariant[];
+  recipe: { yield: number; labour: number; packaging: number; notes: string; items: [name: string, qty: number][] };
+  /** Prices the owner set, in pesos per option; options without one get the suggested price. */
+  prices?: Record<string, number>;
 };
+
+const ROLL_PHOTOS = ["1509365465985-25d11c17e812", "1483695028939-5bb13f8648b0"];
+const ROLL_NOTES = "Dough proofs overnight. One batch is 42 rolls. Box of 4 and Box of 9 use the gold PF boxes with sticker and ribbon; the tray uses the WB130 foil pan.";
+// Packaging per unit sold, from the costing file: 7x7x4 box ₱28, 10x10x4 box ₱32, foil pan ₱13, sticker ₱2, ribbon ₱10.
+const ROLL_VARIANTS: SeedVariant[] = [["Box of 4", 20, "", 4, 40], ["Box of 9", 10, "", 9, 44], ["Tray of 36", 3, "", 36, 15]];
 
 const PRODUCTS: SeedProduct[] = [
   {
-    slug: "classic-cinnamon-rolls", name: "Classic Cinnamon Rolls", category: "Rolls & Donuts", featured: true,
-    price: 480, compareAt: 550,
-    description: "A box of 4 soft, pull-apart rolls. The dough proofs overnight, then gets rolled with brown sugar, butter and Ceylon cinnamon. This is the recipe we started with.",
-    howToUse: "Warm for 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature, or a month in the freezer.",
-    photos: ["1509365465985-25d11c17e812", "1483695028939-5bb13f8648b0"],
-    variants: [["Classic glaze", 24, "JC-ROL-CIN-GLZ"], ["Cream cheese frosting", 10, "JC-ROL-CIN-CCF"]],
+    slug: "og-cinnamon-rolls", name: "OG Cinnamon Rolls", category: "Cinnamon Rolls", featured: true,
+    description: "Our original: soft, pull-apart rolls with a brown sugar and cinnamon swirl, topped with cream cheese frosting.",
+    howToUse: "Best warm. 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature.",
+    photos: ROLL_PHOTOS, variants: ROLL_VARIANTS,
+    recipe: { yield: 42, labour: 0, packaging: 40, notes: ROLL_NOTES, items: [["Cinnamon roll dough", 42], ["OG filling", 42], ["Cream cheese topping", 42]] },
   },
   {
-    slug: "sprinkle-donuts", name: "Sprinkle Donuts", category: "Rolls & Donuts", featured: false,
-    price: 390, compareAt: 450,
-    description: "Half a dozen yeast-raised donuts, fried in small batches and dipped by hand. Light and fluffy inside, with a glaze that sets to a thin crackle.",
-    howToUse: "Best eaten the day they arrive. If you're keeping them for tomorrow, leave them in the box at room temperature and skip the ref, which dries them out.",
-    photos: ["1551024601-bec78aea704b", "1527515545081-5db817172677"],
-    variants: [["Chocolate glaze", 30, "JC-ROL-DON-CHO"], ["Strawberry glaze", 15, "JC-ROL-DON-STR"]],
+    slug: "choco-cinnamon-rolls", name: "Choco Cinnamon Rolls", category: "Cinnamon Rolls", featured: true,
+    description: "The cinnamon swirl gets cocoa in the filling, then cream cheese frosting and a dark chocolate drizzle on top.",
+    howToUse: "Best warm. 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature.",
+    photos: ROLL_PHOTOS, variants: ROLL_VARIANTS,
+    recipe: { yield: 42, labour: 0, packaging: 40, notes: ROLL_NOTES, items: [["Cinnamon roll dough", 42], ["Choco filling", 42], ["Cream cheese topping", 42], ["Chocolate topping", 42]] },
   },
   {
-    slug: "butter-croissants", name: "Butter Croissants", category: "Rolls & Donuts", featured: false,
-    price: 420, compareAt: 480,
-    description: "A box of 4 croissants made with a three-day laminated dough and 82% butterfat butter. Crisp, flaky layers outside and a honeycomb crumb inside.",
-    howToUse: "Reheat for 4 minutes in a 170°C oven or toaster oven to bring back the crunch. Don't microwave them; they go soft.",
-    photos: ["1555507036-ab1f4038808a", "1568254183919-78a4f43a2877"],
-    variants: [["Butter", 16, "JC-ROL-CRO-BUT"], ["Almond", 9, "JC-ROL-CRO-ALM"], ["Chocolate", 11, "JC-ROL-CRO-CHO"]],
+    slug: "biscoff-cinnamon-rolls", name: "Biscoff Cinnamon Rolls", category: "Cinnamon Rolls", featured: false,
+    description: "The original roll finished with cream cheese frosting and a layer of Biscoff on top.",
+    howToUse: "Best warm. 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature.",
+    photos: ROLL_PHOTOS, variants: ROLL_VARIANTS,
+    recipe: { yield: 42, labour: 0, packaging: 40, notes: ROLL_NOTES, items: [["Cinnamon roll dough", 42], ["OG filling", 42], ["Cream cheese topping", 42], ["Biscoff spread", 210]] },
   },
   {
-    slug: "hokkaido-milk-loaf", name: "Hokkaido Milk Loaf", category: "Rolls & Donuts", featured: false,
-    price: 190,
-    description: "A soft, tall loaf made with fresh milk and a cooked-flour starter that keeps it tender for days. Slightly sweet, and good for toast or sandwiches.",
-    howToUse: "Slice thick and toast, or use it for French toast on day 3. Keeps 4 days in its bag at room temperature.",
-    photos: ["1620921568790-c1cf8984624c", "1608198093002-ad4e005484ec"],
-    variants: [["Plain", 28, "JC-ROL-LOF-PLN"], ["Cheese", 13, "JC-ROL-LOF-CHS"]],
+    slug: "oreo-cinnamon-rolls", name: "Oreo Cinnamon Rolls", category: "Cinnamon Rolls", featured: false,
+    description: "Cocoa in the swirl, cream cheese frosting, and Oreo crumbs over the top.",
+    howToUse: "Best warm. 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature.",
+    photos: ROLL_PHOTOS, variants: [["Box of 4", 20, "", 4, 40], ["Box of 9", 10, "", 9, 44], ["Tray of 36", 0, "", 36, 15]],
+    recipe: { yield: 42, labour: 0, packaging: 40, notes: ROLL_NOTES, items: [["Cinnamon roll dough", 42], ["Choco filling", 42], ["Cream cheese topping", 42], ["Oreo crumbs", 210]] },
   },
   {
-    slug: "chocolate-chunk-cookies", name: "Chocolate Chunk Cookies", category: "Cookies", featured: true,
-    price: 320,
-    description: "A box of 6 thick cookies with crisp edges and a soft middle. We chop the chocolate by hand, so every cookie has both big pools and small shards.",
-    howToUse: "Warm for 10 seconds in the microwave to melt the chocolate again. Keeps 2 weeks in a sealed container.",
-    photos: ["1499636136210-6f4ee915583e", "1558961363-fa8fdf82db35"],
-    variants: [["Dark chocolate", 20, "JC-COO-CHK-DRK"], ["Milk chocolate", 14, "JC-COO-CHK-MLK"], ["Walnut", 3, "JC-COO-CHK-WAL"]],
-  },
-  {
-    slug: "butter-cookie-tin", name: "Butter Cookie Tin", category: "Cookies", featured: false,
-    price: 360,
-    description: "A tin of 24 small, crisp butter cookies. They are made with browned butter, which gives them a toasted, nutty flavour.",
-    howToUse: "Good with coffee or tea. The tin keeps them crisp for 3 weeks; close the lid properly after opening.",
-    photos: ["1464195244916-405fa0a82545", "1558961363-fa8fdf82db35"],
-    variants: [["Classic", 22, "JC-COO-TIN-CLA"], ["Sea salt", 8, "JC-COO-TIN-SAL"]],
-  },
-  {
-    slug: "fudge-brownie-bars", name: "Fudge Brownie Bars", category: "Cookies", featured: false,
-    price: 280,
-    description: "A box of 4 dense, fudgy brownie bars with a thin, shiny crust. Made with 70% dark chocolate and very little flour.",
-    howToUse: "Eat at room temperature for a fudgy bite, or chill for a firmer, truffle-like one. Keeps 1 week sealed.",
-    photos: ["1590080875515-8a3a8dc5735e", "1599599810769-bcde5a160d32"],
-    variants: [["Original", 25, "JC-COO-BRO-ORG"], ["Sprinkles", 12, "JC-COO-BRO-SPR"]],
-  },
-  {
-    slug: "iced-sugar-cookies", name: "Iced Sugar Cookies", category: "Cookies", featured: false,
-    price: 210,
-    description: "A box of 6 soft sugar cookies, each iced and decorated by hand. A good small gift, or something for the kids' baon.",
-    howToUse: "Keep in the box away from heat so the icing doesn't smudge. Best within 10 days.",
-    photos: ["1495147466023-ac5c588e2e94", "1599599810769-bcde5a160d32"],
-    variants: [["Vanilla", 35, "JC-COO-SUG-VAN"], ["Calamansi", 5, "JC-COO-SUG-CAL"]],
-  },
-  {
-    slug: "blueberry-cheesecake", name: "Blueberry Cheesecake", category: "Cakes", featured: true,
-    price: 650,
-    description: "A 6-inch baked cheesecake on a graham crust, topped with a fruit compote we cook down ourselves. Serves 6 to 8.",
-    howToUse: "Keep chilled and serve cold. Slice with a knife dipped in hot water for clean edges. Keeps 4 days in the ref.",
-    photos: ["1533134242443-d4fd215305ad", "1571115177098-24ec42ed204d"],
-    variants: [["Blueberry", 12, "JC-CAK-CHS-BLU"], ["Strawberry", 0, "JC-CAK-CHS-STR"]],
-  },
-  {
-    slug: "chocolate-berry-cake", name: "Chocolate Berry Cake", category: "Cakes", featured: true,
-    price: 520,
-    description: "A 6-inch, three-layer chocolate cake filled with whipped ganache and topped with fresh berries. Serves 6 to 8.",
-    howToUse: "Take it out of the ref 20 minutes before serving so the ganache softens. Keeps 3 days chilled.",
-    photos: ["1606890737304-57a1ca8a5b62", "1578985545062-69928b1d9587"],
-    variants: [["Dark chocolate", 18, "JC-CAK-BER-DRK"], ["Mocha", 4, "JC-CAK-BER-MOC"]],
-  },
-  {
-    slug: "red-velvet-cupcakes", name: "Red Velvet Cupcakes", category: "Cakes", featured: false,
-    price: 240, compareAt: 290,
-    description: "A box of 4 red velvet cupcakes with a light cocoa flavour and a tall swirl of frosting.",
-    howToUse: "Keep chilled, and let them sit out for 15 minutes before eating. Best within 4 days.",
-    photos: ["1614707267537-b85aaf00c4b7", "1519869325930-281384150729"],
-    variants: [["Cream cheese frosting", 40, "JC-CAK-RED-CCF"], ["Vanilla buttercream", 18, "JC-CAK-RED-VAN"]],
-  },
-  {
-    slug: "chocolate-cupcakes", name: "Chocolate Cupcakes", category: "Cakes", featured: false,
-    price: 450,
-    description: "A box of 6 moist chocolate cupcakes topped with piped buttercream and chocolate chips.",
-    howToUse: "Keep chilled, and let them sit out for 15 minutes before eating. Best within 4 days.",
-    photos: ["1550617931-e17a7b70dce2", "1587668178277-295251f900ce"],
-    variants: [["Chocolate buttercream", 15, "JC-CAK-CUP-CHO"], ["Mocha", 6, "JC-CAK-CUP-MOC"]],
+    slug: "vanilla-cupcake", name: "Vanilla Cupcake", category: "Cupcakes", featured: true,
+    description: "A 3 oz vanilla cupcake with a tall swirl of whipped cream frosting and sprinkles, boxed with a holder.",
+    howToUse: "Keep chilled and let it sit out for 15 minutes before eating. Best within 3 days.",
+    photos: ["1519869325930-281384150729", "1486427944299-d1955d23e34d"],
+    // Per cupcake: liner ₱0.92, piping bag ₱0.71, sauce cup ₱1.82, a quarter of the ₱23 box, a quarter of the ₱4 holder, card ₱1.50.
+    variants: [["Single", 40, "", 1, 11.7], ["Box of 4", 12, "", 4, 42.3]],
+    prices: { Single: 100, "Box of 4": 400 },
+    recipe: {
+      yield: 16, labour: 0, packaging: 11.7,
+      notes: "Yield 16 cupcakes at 3 oz. Sour cream: half a cup of all-purpose cream with 2 tbsp calamansi juice and 2 tbsp milk also works. Frosting is 45 g whipped cream and 5 g sprinkles per cupcake.",
+      items: [
+        ["All-purpose flour", 213], ["Sugar", 200], ["Baking soda", 1.5], ["Baking powder", 6], ["Salt", 1.42],
+        ["Butter (Maven 225 g)", 170], ["Egg", 3], ["Vanilla extract", 15], ["Sour cream", 120], ["Whole milk", 120],
+        ["Whip cream frosting", 720], ["Non-pareil sprinkles", 80],
+      ],
+    },
   },
 ];
 
+// The pack you buy: [name, unit, pack size, pack price in pesos]. Prices as listed in the costing file.
+const INGREDIENTS: [string, string, number, number][] = [
+  ["All-purpose flour", "g", 1000, 57], ["Bread flour", "g", 1000, 51], ["Salt", "g", 1000, 24], ["Nutmeg", "g", 100, 0],
+  ["Yeast", "g", 500, 283], ["Sugar", "g", 1000, 81], ["Fresh milk", "g", 1000, 93], ["Water", "g", 1000, 10], ["Egg", "pc", 1, 9],
+  ["Butter (Caeli 2.5 kg)", "g", 2500, 1155], ["Brown sugar", "g", 1000, 63], ["Cinnamon powder", "g", 1000, 1208],
+  ["Cocoa powder", "g", 1000, 850], ["Cream cheese", "g", 1360, 805], ["Confectioners sugar", "g", 2000, 238],
+  ["Vanilla (Neco 3.3 kg)", "g", 3300, 262], ["Dark couverture", "g", 2500, 3990], ["All-purpose cream", "g", 1000, 328],
+  ["Biscoff spread", "g", 1000, 985], ["Speculoos crumbs", "g", 1000, 615], ["Oreo crumbs", "g", 454, 208],
+  ["Baking soda", "g", 1000, 43], ["Baking powder", "g", 1000, 109], ["Butter (Maven 225 g)", "g", 225, 165],
+  ["Vanilla extract", "ml", 250, 57], ["Sour cream", "ml", 1000, 288], ["Whole milk", "ml", 1000, 85],
+  ["Whip cream frosting", "g", 1500, 289], ["Non-pareil sprinkles", "g", 1000, 322],
+  ["Cupcake liner", "pc", 100, 92], ["Piping bag", "pc", 100, 71], ["Sauce cup", "pc", 100, 182.4],
+  ["6x6x3 red box", "pc", 5, 115], ["4-pc cupcake holder", "pc", 1, 4], ["7x7x4 gold box", "pc", 5, 140],
+  ["10x10x4 gold box", "pc", 1, 32], ["Foil pan WB130", "pc", 10, 130],
+];
+
+// Sub-recipes shared by the cinnamon roll flavours. Each batch dresses 42 rolls.
+const COMPONENTS: { name: string; yieldQty: number; yieldUnit: string; notes: string; items: [string, number][] }[] = [
+  { name: "Cinnamon roll dough", yieldQty: 42, yieldUnit: "pc", notes: "Makes 42 rolls.",
+    items: [["All-purpose flour", 500], ["Bread flour", 500], ["Salt", 15], ["Nutmeg", 10], ["Yeast", 20], ["Sugar", 200], ["Fresh milk", 400], ["Water", 100], ["Egg", 2], ["Butter (Caeli 2.5 kg)", 100]] },
+  { name: "OG filling", yieldQty: 42, yieldUnit: "pc", notes: "", items: [["Butter (Caeli 2.5 kg)", 100], ["Brown sugar", 300], ["Cinnamon powder", 40]] },
+  { name: "Choco filling", yieldQty: 42, yieldUnit: "pc", notes: "", items: [["Butter (Caeli 2.5 kg)", 100], ["Brown sugar", 300], ["Cinnamon powder", 40], ["Cocoa powder", 40]] },
+  { name: "Cream cheese topping", yieldQty: 42, yieldUnit: "pc", notes: "", items: [["Cream cheese", 115], ["Butter (Caeli 2.5 kg)", 28], ["Confectioners sugar", 120], ["Vanilla (Neco 3.3 kg)", 15], ["Fresh milk", 65]] },
+  { name: "Chocolate topping", yieldQty: 42, yieldUnit: "pc", notes: "", items: [["Dark couverture", 80], ["All-purpose cream", 20], ["Fresh milk", 40]] },
+];
+
 type SeedOrder = {
-  daysAgo: number; name: string; mobile: string; province: string; city: string; address: string;
+  daysAgo: number; name: string; mobile: string; city: string; address: string;
   notes?: string; gcashRef?: string; pickup?: boolean; status: OrderStatus; items: [slug: string, variant: string, qty: number][];
 };
 
 const ORDERS: SeedOrder[] = [
-  { daysAgo: 59, name: "Maria Santos", mobile: "09171230001", province: "Cebu", city: "Cebu City", address: "45 Gorordo Ave, Lahug", status: "delivered", items: [["classic-cinnamon-rolls", "Classic glaze", 2], ["red-velvet-cupcakes", "Cream cheese frosting", 1]] },
-  { daysAgo: 53, name: "Jose Ramirez", mobile: "09181230002", province: "Cebu", city: "Cebu City", address: "Unit 3B, 12 Escario St, Kamputhaw", gcashRef: "4012887766541", status: "delivered", items: [["chocolate-chunk-cookies", "Dark chocolate", 2], ["chocolate-cupcakes", "Chocolate buttercream", 1]] },
-  { daysAgo: 47, name: "Liza Bautista", pickup: true, mobile: "09191230003", province: "Cebu", city: "Mandaue City", address: "8 A. Del Rosario St, Guizo", status: "delivered", items: [["chocolate-berry-cake", "Dark chocolate", 1]] },
-  { daysAgo: 41, name: "Paolo Mendoza", mobile: "09271230004", province: "Cebu", city: "Talisay City", address: "Blk 4 Lot 9, Bulacao Heights", notes: "Leave with the guard if no one answers.", gcashRef: "5013996654120", status: "delivered", items: [["sprinkle-donuts", "Strawberry glaze", 2], ["iced-sugar-cookies", "Vanilla", 2], ["butter-croissants", "Butter", 1]] },
-  { daysAgo: 34, name: "Carmela Dizon", mobile: "09061230005", province: "Cebu", city: "Lapu-Lapu City", address: "27 M.L. Quezon National Hwy, Pusok", status: "cancelled", items: [["blueberry-cheesecake", "Blueberry", 1]] },
-  { daysAgo: 28, name: "Ramon Villanueva", mobile: "09151230006", province: "Cebu", city: "Cebu City", address: "1803 Tower B, Cebu IT Park, Apas", gcashRef: "6014115543209", status: "shipped", items: [["chocolate-cupcakes", "Mocha", 1], ["fudge-brownie-bars", "Original", 2]] },
-  { daysAgo: 23, name: "Grace Lim", pickup: true, mobile: "09171230007", province: "Cebu", city: "Mandaue City", address: "16 Hernan Cortes St, Banilad", status: "shipped", items: [["butter-croissants", "Almond", 2], ["butter-cookie-tin", "Classic", 1]] },
-  { daysAgo: 19, name: "Antonio Cruz", mobile: "09281230008", province: "Cebu", city: "Consolacion", address: "5 Purok 2, Cansaga", status: "cancelled", items: [["red-velvet-cupcakes", "Vanilla buttercream", 2]] },
-  { daysAgo: 15, name: "Bea Fernandez", mobile: "09391230009", province: "Cebu", city: "Minglanilla", address: "214 Purok 3, Tunghaan", gcashRef: "7015224432108", status: "shipped", items: [["classic-cinnamon-rolls", "Cream cheese frosting", 1], ["hokkaido-milk-loaf", "Plain", 2]] },
-  { daysAgo: 12, name: "Miguel Torres", mobile: "09171230010", province: "Cebu", city: "Liloan", address: "Km 18, Yati", status: "confirmed", items: [["chocolate-chunk-cookies", "Milk chocolate", 3]] },
-  { daysAgo: 8, name: "Katrina Reyes", mobile: "09181230011", province: "Cebu", city: "Cebu City", address: "Unit 12F, 7 Salinas Dr, Lahug", gcashRef: "8016333321007", status: "confirmed", items: [["chocolate-berry-cake", "Dark chocolate", 2], ["classic-cinnamon-rolls", "Classic glaze", 2]] },
-  { daysAgo: 5, name: "Noel Aquino", mobile: "09061230012", province: "Cebu", city: "Danao City", address: "19 Rizal St, Poblacion", status: "confirmed", items: [["iced-sugar-cookies", "Calamansi", 1], ["fudge-brownie-bars", "Sprinkles", 1]] },
-  { daysAgo: 3, name: "Isabel Garcia", mobile: "09191230013", province: "Cebu", city: "Cebu City", address: "730 Sikatuna St, Parian", gcashRef: "9017442210906", status: "new", items: [["butter-croissants", "Chocolate", 1], ["chocolate-cupcakes", "Chocolate buttercream", 1]] },
-  { daysAgo: 2, name: "Dennis Uy", pickup: true, mobile: "09271230014", province: "Cebu", city: "Lapu-Lapu City", address: "33 Basak-Marigondon Rd", status: "new", items: [["sprinkle-donuts", "Chocolate glaze", 1]] },
-  { daysAgo: 1, name: "Trisha Navarro", mobile: "09151230015", province: "Cebu", city: "Talisay City", address: "Blk 12 Lot 3, Lawaan 2", notes: "Call before delivery, please.", status: "new", items: [["butter-cookie-tin", "Sea salt", 1], ["hokkaido-milk-loaf", "Cheese", 1], ["red-velvet-cupcakes", "Cream cheese frosting", 2]] },
-];
-
-// Pack you buy: [name, unit, pack size, pack price in pesos].
-const INGREDIENTS: [string, string, number, number][] = [
-  ["Bread flour", "g", 1000, 48], ["All-purpose flour", "g", 1000, 42], ["White sugar", "g", 1000, 65],
-  ["Brown sugar", "g", 1000, 75], ["Powdered sugar", "g", 1000, 85], ["Butter", "g", 1000, 420],
-  ["Eggs", "pc", 1, 9], ["Fresh milk", "ml", 1000, 95], ["Whipping cream", "ml", 1000, 390],
-  ["Cream cheese", "g", 1000, 480], ["Instant yeast", "g", 500, 180], ["Baking powder", "g", 250, 70],
-  ["Salt", "g", 1000, 25], ["Cinnamon", "g", 100, 120], ["Vanilla extract", "ml", 100, 180],
-  ["Cocoa powder", "g", 500, 260], ["Dark chocolate", "g", 1000, 520], ["Chocolate chips", "g", 1000, 480],
-  ["Vegetable oil", "ml", 1000, 110], ["Sprinkles", "g", 500, 220], ["Graham crackers", "g", 1000, 160],
-  ["Blueberry compote", "g", 1000, 450], ["Red food colour", "ml", 30, 60],
-];
-
-// Per batch: yield in product units (boxes or cakes), labour minutes, packaging pesos per unit, ingredient grams/ml/pieces.
-const RECIPES: { slug: string; yield: number; labour: number; packaging: number; notes: string; items: [string, number][] }[] = [
-  { slug: "classic-cinnamon-rolls", yield: 3, labour: 90, packaging: 15, notes: "Proof the dough overnight in the ref. Bake at 180°C for 22 minutes.",
-    items: [["Bread flour", 750], ["White sugar", 100], ["Brown sugar", 150], ["Butter", 180], ["Eggs", 2], ["Fresh milk", 300], ["Instant yeast", 7], ["Cinnamon", 20], ["Salt", 5], ["Powdered sugar", 120]] },
-  { slug: "sprinkle-donuts", yield: 4, labour: 120, packaging: 12, notes: "Fry at 175°C, 90 seconds a side. Glaze while warm.",
-    items: [["All-purpose flour", 1000], ["White sugar", 120], ["Butter", 60], ["Eggs", 3], ["Fresh milk", 350], ["Instant yeast", 10], ["Vegetable oil", 500], ["Dark chocolate", 200], ["Sprinkles", 60], ["Powdered sugar", 150], ["Salt", 5]] },
-  { slug: "chocolate-chunk-cookies", yield: 6, labour: 60, packaging: 10, notes: "Chill the dough 1 hour. Bake at 175°C for 12 minutes.",
-    items: [["All-purpose flour", 600], ["Butter", 450], ["Brown sugar", 300], ["White sugar", 150], ["Eggs", 2], ["Vanilla extract", 10], ["Baking powder", 6], ["Salt", 5], ["Chocolate chips", 500]] },
-  { slug: "blueberry-cheesecake", yield: 2, labour: 120, packaging: 35, notes: "Water bath at 160°C for 55 minutes, then chill overnight.",
-    items: [["Cream cheese", 1000], ["White sugar", 250], ["Eggs", 4], ["Whipping cream", 250], ["Graham crackers", 300], ["Butter", 120], ["Blueberry compote", 400], ["Vanilla extract", 10]] },
-  { slug: "red-velvet-cupcakes", yield: 6, labour: 90, packaging: 12, notes: "Bake at 170°C for 18 minutes. Frost only when fully cool.",
-    items: [["All-purpose flour", 500], ["White sugar", 350], ["Cocoa powder", 25], ["Vegetable oil", 250], ["Eggs", 2], ["Fresh milk", 250], ["Red food colour", 20], ["Baking powder", 8], ["Cream cheese", 400], ["Butter", 150], ["Powdered sugar", 400], ["Vanilla extract", 10]] },
+  { daysAgo: 59, name: "Maria Santos", mobile: "09171230001", city: "Cebu City", address: "45 Gorordo Ave, Lahug", status: "delivered", items: [["og-cinnamon-rolls", "Box of 4", 2], ["vanilla-cupcake", "Box of 4", 1]] },
+  { daysAgo: 53, name: "Jose Ramirez", mobile: "09181230002", city: "Cebu City", address: "Unit 3B, 12 Escario St, Kamputhaw", gcashRef: "4012887766541", status: "delivered", items: [["choco-cinnamon-rolls", "Box of 9", 1]] },
+  { daysAgo: 47, name: "Liza Bautista", mobile: "09191230003", city: "Mandaue City", address: "8 A. Del Rosario St, Guizo", pickup: true, status: "delivered", items: [["oreo-cinnamon-rolls", "Box of 4", 1]] },
+  { daysAgo: 41, name: "Paolo Mendoza", mobile: "09271230004", city: "Talisay City", address: "Blk 4 Lot 9, Bulacao Heights", notes: "Leave with the guard if no one answers.", gcashRef: "5013996654120", status: "delivered", items: [["biscoff-cinnamon-rolls", "Box of 4", 2], ["vanilla-cupcake", "Single", 4]] },
+  { daysAgo: 34, name: "Carmela Dizon", mobile: "09061230005", city: "Lapu-Lapu City", address: "27 M.L. Quezon National Hwy, Pusok", status: "cancelled", items: [["og-cinnamon-rolls", "Tray of 36", 1]] },
+  { daysAgo: 28, name: "Ramon Villanueva", mobile: "09151230006", city: "Cebu City", address: "1803 Tower B, Cebu IT Park, Apas", gcashRef: "6014115543209", status: "shipped", items: [["choco-cinnamon-rolls", "Box of 4", 1], ["vanilla-cupcake", "Box of 4", 2]] },
+  { daysAgo: 23, name: "Grace Lim", mobile: "09171230007", city: "Mandaue City", address: "16 Hernan Cortes St, Banilad", pickup: true, status: "shipped", items: [["og-cinnamon-rolls", "Box of 9", 1]] },
+  { daysAgo: 19, name: "Antonio Cruz", mobile: "09281230008", city: "Consolacion", address: "5 Purok 2, Cansaga", status: "cancelled", items: [["vanilla-cupcake", "Single", 6]] },
+  { daysAgo: 15, name: "Bea Fernandez", mobile: "09391230009", city: "Minglanilla", address: "214 Purok 3, Tunghaan", gcashRef: "7015224432108", status: "shipped", items: [["oreo-cinnamon-rolls", "Box of 9", 1], ["og-cinnamon-rolls", "Box of 4", 1]] },
+  { daysAgo: 12, name: "Miguel Torres", mobile: "09171230010", city: "Liloan", address: "Km 18, Yati", status: "confirmed", items: [["biscoff-cinnamon-rolls", "Box of 9", 1]] },
+  { daysAgo: 8, name: "Katrina Reyes", mobile: "09181230011", city: "Cebu City", address: "Unit 12F, 7 Salinas Dr, Lahug", gcashRef: "8016333321007", status: "confirmed", items: [["choco-cinnamon-rolls", "Tray of 36", 1]] },
+  { daysAgo: 5, name: "Noel Aquino", mobile: "09061230012", city: "Danao City", address: "19 Rizal St, Poblacion", status: "confirmed", items: [["vanilla-cupcake", "Box of 4", 1], ["og-cinnamon-rolls", "Box of 4", 1]] },
+  { daysAgo: 3, name: "Isabel Garcia", mobile: "09191230013", city: "Cebu City", address: "730 Sikatuna St, Parian", gcashRef: "9017442210906", status: "new", items: [["oreo-cinnamon-rolls", "Box of 4", 2]] },
+  { daysAgo: 2, name: "Dennis Uy", mobile: "09271230014", city: "Lapu-Lapu City", address: "33 Basak-Marigondon Rd", pickup: true, status: "new", items: [["choco-cinnamon-rolls", "Box of 4", 1]] },
+  { daysAgo: 1, name: "Trisha Navarro", mobile: "09151230015", city: "Talisay City", address: "Blk 12 Lot 3, Lawaan 2", notes: "Call before delivery, please.", status: "new", items: [["biscoff-cinnamon-rolls", "Box of 4", 1], ["vanilla-cupcake", "Single", 2]] },
 ];
 
 const PATH: OrderStatus[] = ["confirmed", "shipped", "delivered"];
 const DAY_MS = 24 * 60 * 60 * 1000;
 
-/** Wipes every table, then fills the shop with demo products and historical orders. */
+/** Wipes every table, then loads the real menu, its recipes and some sample orders. */
 export function seed(now: Date = new Date()): void {
   const db = getDb();
-  db.exec("DELETE FROM order_items; DELETE FROM orders; DELETE FROM variants; DELETE FROM products; DELETE FROM recipe_items; DELETE FROM recipes; DELETE FROM ingredients; DELETE FROM settings;");
-
-  for (const p of PRODUCTS) {
-    const r = createProduct({
-      slug: p.slug, name: p.name, category: p.category, description: p.description, howToUse: p.howToUse,
-      price: peso(p.price), compareAt: p.compareAt ? peso(p.compareAt) : null, images: p.photos.map(img),
-      featured: p.featured, active: true,
-      variants: p.variants.map(([name, stock, sku]) => ({ name, stock, sku })),
-    });
-    if (!r.ok) throw new Error(`Seed product ${p.slug}: ${r.error}`);
-  }
+  db.exec(
+    "DELETE FROM order_items; DELETE FROM orders; DELETE FROM recipe_lines; DELETE FROM recipe_variants; DELETE FROM recipes; " +
+      "DELETE FROM component_items; DELETE FROM components; DELETE FROM ingredients; DELETE FROM variants; DELETE FROM products; DELETE FROM settings;",
+  );
 
   const ingredientId = new Map<string, number>();
   for (const [name, unit, packQty, pesos] of INGREDIENTS) {
@@ -182,13 +137,55 @@ export function seed(now: Date = new Date()): void {
     if (!r.ok) throw new Error(`Seed ingredient ${name}: ${r.error}`);
     ingredientId.set(name, r.id);
   }
-  const productId = new Map(listProducts().map((p) => [p.slug, p.id]));
-  for (const r of RECIPES) {
-    const saved = saveRecipe(productId.get(r.slug)!, {
-      yield: r.yield, labourMinutes: r.labour, packagingCost: peso(r.packaging), notes: r.notes,
-      items: r.items.map(([name, qty]) => ({ ingredientId: ingredientId.get(name)!, qty })),
+  const need = (name: string) => {
+    const id = ingredientId.get(name);
+    if (!id) throw new Error(`Seed: unknown ingredient ${name}`);
+    return id;
+  };
+
+  const componentId = new Map<string, number>();
+  for (const c of COMPONENTS) {
+    const r = saveComponent(null, { name: c.name, yieldQty: c.yieldQty, yieldUnit: c.yieldUnit, notes: c.notes, items: c.items.map(([name, qty]) => ({ ingredientId: need(name), qty })) });
+    if (!r.ok) throw new Error(`Seed component ${c.name}: ${r.error}`);
+    componentId.set(c.name, r.id);
+  }
+
+  for (const p of PRODUCTS) {
+    const r = createProduct({
+      slug: p.slug, name: p.name, category: p.category, description: p.description, howToUse: p.howToUse,
+      price: 0, compareAt: null, images: p.photos.map(img), featured: p.featured, active: true,
+      variants: p.variants.map(([name, stock, sku]) => ({ name, stock, sku })),
     });
-    if (!saved.ok) throw new Error(`Seed recipe ${r.slug}: ${saved.error}`);
+    if (!r.ok) throw new Error(`Seed product ${p.slug}: ${r.error}`);
+  }
+
+  // Recipes, then prices: every option is priced at the recipe's suggested price (cost × markup + packaging),
+  // which is how the costing file prices them.
+  for (const p of listProducts()) {
+    const seed = PRODUCTS.find((s) => s.slug === p.slug)!;
+    const line = ([name, qty]: [string, number]) =>
+      componentId.has(name) ? { componentId: componentId.get(name)!, qty } : { ingredientId: need(name), qty };
+    const saved = saveRecipe(p.id, {
+      yield: seed.recipe.yield, labourMinutes: seed.recipe.labour, packagingCost: peso(seed.recipe.packaging), notes: seed.recipe.notes,
+      items: seed.recipe.items.map(line),
+      variants: p.variants.map((v) => {
+        const sv = seed.variants.find((x) => x[0] === v.name)!;
+        return { variantId: v.id, pieces: sv[3], packagingCost: peso(sv[4]), items: [] };
+      }),
+    });
+    if (!saved.ok) throw new Error(`Seed recipe ${p.slug}: ${saved.error}`);
+    for (const v of p.variants) {
+      const set = seed.prices?.[v.name];
+      if (set !== undefined) {
+        getDb().prepare("UPDATE variants SET price = ? WHERE id = ?").run(peso(set), v.id);
+        continue;
+      }
+      const priced = applySuggestedPrice(p.id, v.id);
+      if (!priced.ok) throw new Error(`Seed price ${p.slug} ${v.name}: ${priced.error}`);
+    }
+    // The product price is the cheapest option, for sorting and "from" labels.
+    const cheapest = Math.min(...p.variants.map((v) => (getDb().prepare("SELECT price FROM variants WHERE id = ?").get(v.id) as { price: number }).price));
+    getDb().prepare("UPDATE products SET price = ? WHERE id = ?").run(cheapest, p.id);
   }
 
   const variantId = new Map<string, number>();
@@ -197,7 +194,7 @@ export function seed(now: Date = new Date()): void {
   for (const o of ORDERS) {
     const r = placeOrder(
       {
-        customerName: o.name, mobile: o.mobile, province: o.province, city: o.city, address: o.address,
+        customerName: o.name, mobile: o.mobile, province: "Cebu", city: o.city, address: o.address,
         notes: o.notes, fulfilment: o.pickup ? "pickup" : "delivery", paymentMethod: o.gcashRef ? "gcash" : "cod", gcashRef: o.gcashRef,
         lines: o.items.map(([slug, variant, qty]) => ({ variantId: variantId.get(`${slug}|${variant}`) ?? -1, qty })),
       },

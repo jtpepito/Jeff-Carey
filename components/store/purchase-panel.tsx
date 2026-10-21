@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { formatPeso } from "@/lib/money";
+import { priceRange, variantPrice } from "@/lib/pricing";
 import type { Product } from "@/lib/products";
 import { cn } from "@/lib/utils";
 import { useCart } from "./cart-provider";
@@ -18,14 +20,24 @@ export function PurchasePanel({ product }: { product: Product }) {
     if (!variant) return;
     cart.add({
       variantId: variant.id, qty, productName: product.name, variantName: variant.name, slug: product.slug,
-      price: product.price, image: product.images[0] ?? null, stock: variant.stock,
+      price: variantPrice(product, variant), image: product.images[0] ?? null, stock: variant.stock,
     });
     setQty(1);
     cart.open();
   }
 
+  const range = priceRange(product);
+  const shown = variant ? variantPrice(product, variant) : range.min;
+
   return (
     <div className="mt-6">
+      <p data-testid="price" className="mb-5 text-2xl font-semibold">
+        {formatPeso(shown)}
+        {product.compareAt && product.compareAt > shown ? (
+          <s className="ml-3 text-lg font-normal text-muted-foreground">{formatPeso(product.compareAt)}</s>
+        ) : null}
+        {range.min !== range.max ? <span className="ml-3 text-sm font-normal text-muted-foreground">Options from {formatPeso(range.min)} to {formatPeso(range.max)}</span> : null}
+      </p>
       <p id="variant-label" className="field-label">Choose an option</p>
       <div role="radiogroup" aria-labelledby="variant-label" className="flex flex-wrap gap-2.5">
         {product.variants.map((v) => {

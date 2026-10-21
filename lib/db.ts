@@ -21,7 +21,8 @@ CREATE TABLE IF NOT EXISTS variants (
   product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
   name TEXT NOT NULL,
   stock INTEGER NOT NULL DEFAULT 0 CHECK (stock >= 0),
-  sku TEXT NOT NULL DEFAULT ''
+  sku TEXT NOT NULL DEFAULT '',
+  price INTEGER CHECK (price IS NULL OR price >= 0)
 );
 CREATE TABLE IF NOT EXISTS orders (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -69,14 +70,39 @@ CREATE TABLE IF NOT EXISTS recipes (
   packaging_cost INTEGER NOT NULL DEFAULT 0 CHECK (packaging_cost >= 0),
   notes TEXT NOT NULL DEFAULT ''
 );
-CREATE TABLE IF NOT EXISTS recipe_items (
+CREATE TABLE IF NOT EXISTS components (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
-  recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  name TEXT NOT NULL,
+  yield_qty REAL NOT NULL CHECK (yield_qty > 0),
+  yield_unit TEXT NOT NULL,
+  notes TEXT NOT NULL DEFAULT ''
+);
+CREATE TABLE IF NOT EXISTS component_items (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  component_id INTEGER NOT NULL REFERENCES components(id) ON DELETE CASCADE,
   ingredient_id INTEGER NOT NULL REFERENCES ingredients(id),
   qty REAL NOT NULL CHECK (qty > 0)
 );
-CREATE INDEX IF NOT EXISTS idx_recipe_items_recipe ON recipe_items(recipe_id);
-CREATE INDEX IF NOT EXISTS idx_recipe_items_ingredient ON recipe_items(ingredient_id);
+CREATE TABLE IF NOT EXISTS recipe_lines (
+  id INTEGER PRIMARY KEY AUTOINCREMENT,
+  recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  variant_id INTEGER REFERENCES variants(id) ON DELETE CASCADE,
+  ingredient_id INTEGER REFERENCES ingredients(id),
+  component_id INTEGER REFERENCES components(id),
+  qty REAL NOT NULL CHECK (qty > 0),
+  CHECK ((ingredient_id IS NULL) <> (component_id IS NULL))
+);
+CREATE TABLE IF NOT EXISTS recipe_variants (
+  recipe_id INTEGER NOT NULL REFERENCES recipes(id) ON DELETE CASCADE,
+  variant_id INTEGER NOT NULL REFERENCES variants(id) ON DELETE CASCADE,
+  pieces INTEGER NOT NULL DEFAULT 1 CHECK (pieces >= 1),
+  packaging_cost INTEGER CHECK (packaging_cost IS NULL OR packaging_cost >= 0),
+  PRIMARY KEY (recipe_id, variant_id)
+);
+CREATE INDEX IF NOT EXISTS idx_component_items_component ON component_items(component_id);
+CREATE INDEX IF NOT EXISTS idx_recipe_lines_recipe ON recipe_lines(recipe_id);
+CREATE INDEX IF NOT EXISTS idx_recipe_lines_ingredient ON recipe_lines(ingredient_id);
+CREATE INDEX IF NOT EXISTS idx_recipe_lines_component ON recipe_lines(component_id);
 CREATE INDEX IF NOT EXISTS idx_variants_product ON variants(product_id);
 CREATE INDEX IF NOT EXISTS idx_orders_created ON orders(created_at);
 CREATE INDEX IF NOT EXISTS idx_items_order ON order_items(order_id);
@@ -109,6 +135,10 @@ function migrate(db: DatabaseSync) {
   if (!orderColumns.includes("request_id")) db.exec("ALTER TABLE orders ADD COLUMN request_id TEXT");
   if (!orderColumns.includes("fulfilment"))
     db.exec("ALTER TABLE orders ADD COLUMN fulfilment TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfilment IN ('delivery','pickup'))");
+  const variantColumns = db.prepare("PRAGMA table_info(variants)").all().map((c) => c.name);
+  if (!variantColumns.includes("price")) db.exec("ALTER TABLE variants ADD COLUMN price INTEGER CHECK (price IS NULL OR price >= 0)");
+  // The first costing release stored lines in recipe_items; recipe_lines replaced it.
+  db.exec("DROP TABLE IF EXISTS recipe_items");
   db.exec("CREATE UNIQUE INDEX IF NOT EXISTS idx_orders_request ON orders(request_id) WHERE request_id IS NOT NULL");
 }
 

@@ -4,7 +4,7 @@ An e-commerce starter for a Philippine direct-to-consumer brand: a mobile-first 
 simple order console. Checkout takes cash on delivery or a GCash reference number. There is no card
 gateway.
 
-The brand is Jef&Carey, a small-batch bakery (rolls and donuts, cookies, cakes). The products, prices and copy are sample data. Everything brand-specific is in
+The brand is Jef&Carey, a small-batch bakery in Cebu. The menu, recipes and ingredient prices come from the owner's costing file; photos, stock levels and sample orders are placeholders. Everything brand-specific is in
 three places, so the starter can be re-skinned:
 
 - `lib/brand.ts` — name, order-code prefix, copy, FAQs
@@ -63,10 +63,19 @@ Stop any running dev or production server before `npm run build` or `npm run e2e
 - **Dates**: timestamps are stored in UTC; "today" and order-code months use Asia/Manila.
 - **Order codes** look like `JC-2610-0001`: prefix, year and month, then a counter that restarts
   each month.
-- **Recipe costing**: `/admin/ingredients` holds the packs you buy (size and price); each product has
-  a recipe (batch yield, ingredient lines, labour minutes, packaging per unit) under
-  `/admin/products/<id>/recipe`. Cost per unit = (ingredients + labour) ÷ yield + packaging, with labour
-  priced from the "Labour rate per hour" setting. Cost and margin show on the product page and list.
+- **Recipe costing**: `/admin/ingredients` holds the packs you buy (size and price). `/admin/components`
+  holds shared sub-recipes (a dough, a filling, a topping) with a yield, costed per unit of that yield.
+  Each product has a recipe under `/admin/products/<id>/recipe`: a base batch (yield in pieces,
+  ingredient or component lines, labour minutes, default packaging per unit sold) plus, per option,
+  the pieces per unit sold, a packaging override and extra batch lines. Cost per unit =
+  (batch + option extras) ÷ yield × pieces + packaging. Suggested price = cost before packaging ×
+  the "Target markup" setting + packaging, rounded up to the peso; "Use" on the product page applies it.
+- **Option prices**: each product option can carry its own price; blank means the product price.
+  The storefront shows "from ₱x" when options differ. The seed prices every option at its suggested
+  price, except the cupcake, which keeps the owner's ₱100 / ₱400.
+- **The menu, ingredient prices and recipes** come from the owner's `Recipe Costing File.xlsx`
+  (cinnamon rolls in four flavours, vanilla cupcakes). The sweet-bread recipes in that file have no
+  prices yet and were not imported.
 - **Pickup**: shoppers can choose pickup at checkout (no address, no delivery fee). The pickup
   address and hours shown to them are the "Pickup details" field in `/admin/settings`.
 - **Delivery area**: `deliveryProvinces` in `lib/brand.ts` (currently Cebu only; an empty list means

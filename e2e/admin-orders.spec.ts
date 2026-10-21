@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { signIn } from "./admin";
 
 test("a storefront order appears as new with correct totals, then cancel restores stock", async ({ page }) => {
-  await page.goto("/product/fudge-brownie-bars"); // ₱280
+  await page.goto("/product/vanilla-cupcake"); // Single ₱100
   await page.getByRole("button", { name: "Add to cart" }).click();
   await page.getByRole("dialog").getByRole("link", { name: /checkout/i }).click();
   await page.getByLabel("Full name").fill("Carlo Dizon");
@@ -20,16 +20,16 @@ test("a storefront order appears as new with correct totals, then cancel restore
 
   // Stock of "Original" after the order, read from the product editor.
   await page.goto("/admin/products");
-  await page.getByRole("link", { name: /Fudge Brownie Bars/ }).click();
+  await page.getByRole("link", { name: /Vanilla Cupcake/ }).click();
   const stockAfterOrder = Number(await page.getByLabel("Variant 1 stock").inputValue());
 
   await page.goto("/admin/orders?status=new");
   const row = page.getByRole("link", { name: new RegExp(code) });
   await expect(row).toContainText("Carlo Dizon");
-  await expect(row).toContainText("₱440"); // 280 + 160 delivery
+  await expect(row).toContainText("₱260"); // 100 + 160 delivery
   await row.click();
   await expect(page.getByText("GCash ref: 9988776655443")).toBeVisible();
-  await expect(page.getByText("Fudge Brownie Bars — Original")).toBeVisible();
+  await expect(page.getByText("Vanilla Cupcake — Single")).toBeVisible();
 
   await page.getByLabel("Internal notes").fill("Verified payment");
   await page.getByRole("button", { name: "Save notes" }).click();
@@ -47,7 +47,7 @@ test("a storefront order appears as new with correct totals, then cancel restore
   await expect(page.getByRole("button", { name: /mark|cancel order/i })).toHaveCount(0);
 
   await page.goto("/admin/products");
-  await page.getByRole("link", { name: /Fudge Brownie Bars/ }).click();
+  await page.getByRole("link", { name: /Vanilla Cupcake/ }).click();
   await expect(page.getByLabel("Variant 1 stock")).toHaveValue(String(stockAfterOrder + 1));
 });
 

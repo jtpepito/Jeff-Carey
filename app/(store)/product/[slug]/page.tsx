@@ -6,7 +6,6 @@ import { ProductGallery } from "@/components/store/product-gallery";
 import { ProductTabs } from "@/components/store/product-tabs";
 import { PurchasePanel } from "@/components/store/purchase-panel";
 import { brand } from "@/lib/brand";
-import { formatPeso } from "@/lib/money";
 import { getProductBySlug, relatedProducts } from "@/lib/products";
 
 type Props = { params: Promise<{ slug: string }> };
@@ -38,12 +37,6 @@ export default async function ProductPage({ params }: Props) {
         <div>
           <p className="eyebrow">{product.category}</p>
           <h1 className="mt-2 text-4xl leading-tight">{product.name}</h1>
-          <p data-testid="price" className="mt-3 text-2xl font-semibold">
-            {formatPeso(product.price)}
-            {product.compareAt ? (
-              <s className="ml-3 text-lg font-normal text-muted-foreground">{formatPeso(product.compareAt)}</s>
-            ) : null}
-          </p>
           <PurchasePanel product={product} />
           <p className="mt-4 text-sm text-muted-foreground">{brand.promise}</p>
           <ProductTabs

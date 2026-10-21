@@ -67,7 +67,7 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
         if (earlier) return { ok: true as const, code: earlier.code };
       }
       const find = db.prepare(
-        `SELECT v.name AS vname, p.id AS pid, p.name AS pname, p.price, p.active
+        `SELECT v.name AS vname, p.id AS pid, p.name AS pname, COALESCE(v.price, p.price) AS price, p.active
          FROM variants v JOIN products p ON p.id = v.product_id WHERE v.id = ?`,
       );
       const take = db.prepare("UPDATE variants SET stock = stock - ? WHERE id = ? AND stock >= ?");

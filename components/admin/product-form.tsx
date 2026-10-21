@@ -104,10 +104,10 @@ export function ProductForm({ productId, initial, categories }: Props) {
 
         <section className="rounded-2xl border border-border bg-card p-5" aria-labelledby="variants-heading">
           <h2 id="variants-heading" className="text-xl">Variants</h2>
-          <p className="text-sm text-muted-foreground">Sizes or flavours. Each has its own stock; all share the product price.</p>
+          <p className="text-sm text-muted-foreground">Sizes or flavours. Each has its own stock. Leave an option price blank to charge the product price.</p>
           <div className="mt-4 space-y-4">
             {v.variants.map((row, i) => (
-              <div key={row.id ?? `new-${i}`} className="grid grid-cols-2 gap-3 rounded-xl border border-border p-3 sm:grid-cols-[1.4fr_1fr_6rem_auto] sm:items-end sm:border-0 sm:p-0">
+              <div key={row.id ?? `new-${i}`} className="grid grid-cols-2 gap-3 rounded-xl border border-border p-3 sm:grid-cols-[1.4fr_1fr_6rem_7rem_auto] sm:items-end sm:border-0 sm:p-0">
                 <div className="col-span-2 sm:col-span-1">
                   <label htmlFor={`v-name-${i}`} className="field-label">Variant {i + 1} name</label>
                   <input id={`v-name-${i}`} className="field" value={row.name} onChange={(e) => setVariant(i, { name: e.target.value })} placeholder="250g" />
@@ -119,6 +119,10 @@ export function ProductForm({ productId, initial, categories }: Props) {
                 <div>
                   <label htmlFor={`v-stock-${i}`} className="field-label">Variant {i + 1} stock</label>
                   <input id={`v-stock-${i}`} className="field" inputMode="numeric" value={row.stock} onChange={(e) => setVariant(i, { stock: e.target.value })} />
+                </div>
+                <div>
+                  <label htmlFor={`v-price-${i}`} className="field-label">Variant {i + 1} price</label>
+                  <input id={`v-price-${i}`} className="field" inputMode="decimal" value={row.price ?? ""} onChange={(e) => setVariant(i, { price: e.target.value })} placeholder="Product price" />
                 </div>
                 <button
                   type="button"
@@ -133,7 +137,7 @@ export function ProductForm({ productId, initial, categories }: Props) {
             ))}
           </div>
           {errorFor("variants")}
-          <button type="button" onClick={() => setV((s) => ({ ...s, variants: [...s.variants, { name: "", sku: "", stock: "0" }] }))} className="btn btn-outline mt-4">
+          <button type="button" onClick={() => setV((s) => ({ ...s, variants: [...s.variants, { name: "", sku: "", stock: "0", price: "" }] }))} className="btn btn-outline mt-4">
             Add variant
           </button>
         </section>

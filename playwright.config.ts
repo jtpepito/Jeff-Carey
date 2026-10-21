@@ -10,7 +10,7 @@ export default defineConfig({
   reporter: "line",
   use: { ...devices["Pixel 5"], viewport: { width: 375, height: 812 }, baseURL: "http://localhost:3218" },
   webServer: [
-    { command: `${next} 3218`, url: "http://localhost:3218", reuseExistingServer: false, env: { ...env, DB_PATH: "data/e2e.db" } },
-    { command: `${next} 3219`, url: "http://localhost:3219", reuseExistingServer: false, env: { ...env, DB_PATH: "data/e2e-empty.db" } },
+    { command: `${next} 3218`, url: "http://localhost:3218", reuseExistingServer: !!process.env.E2E_REUSE, env: { ...env, DB_PATH: "data/e2e.db" } },
+    { command: `${next} 3219`, url: "http://localhost:3219", reuseExistingServer: !!process.env.E2E_REUSE, env: { ...env, DB_PATH: "data/e2e-empty.db" } },
   ],
 });

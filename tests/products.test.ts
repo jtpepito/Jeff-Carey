@@ -3,6 +3,7 @@ import {
   cartLineInfo, createProduct, getProductById, getProductBySlug, listCategories, listProducts,
   lowStockVariants, relatedProducts, removeProduct, updateProduct, type ProductInput,
 } from "@/lib/products";
+import { priceRange } from "@/lib/pricing";
 import { freshDb } from "./helpers";
 
 beforeEach(freshDb);
@@ -105,4 +106,22 @@ test("lowStockVariants lists active variants at or below the limit", () => {
   createProduct(sample({ variants: [{ name: "250g", stock: 6, sku: "" }, { name: "500g", stock: 5, sku: "" }, { name: "1kg", stock: 0, sku: "" }] }));
   createProduct(sample({ slug: "hidden", active: false, variants: [{ name: "x", stock: 1, sku: "" }] }));
   expect(lowStockVariants().map((v) => [v.variantName, v.stock])).toEqual([["1kg", 0], ["500g", 5]]);
+});
+
+test("an option can carry its own price; others fall back to the product price", () => {
+  const { id } = createProduct(sample({ variants: [{ name: "Box of 4", stock: 5, sku: "", price: 23100 }, { name: "Box of 9", stock: 2, sku: "", price: 47300 }, { name: "Single", stock: 9, sku: "" }] })) as { ok: true; id: number };
+  const p = getProductById(id)!;
+  expect(p.variants.map((v) => v.price)).toEqual([23100, 47300, null]);
+  expect(cartLineInfo(p.variants.map((v) => v.id)).map((l) => l.price)).toEqual([23100, 47300, 45000]);
+});
+
+test("an option price must be a whole number of centavos, 0 or more", () => {
+  expect(createProduct(sample({ variants: [{ name: "A", stock: 1, sku: "", price: -1 }] }))).toMatchObject({ ok: false, field: "variants" });
+  expect(createProduct(sample({ variants: [{ name: "A", stock: 1, sku: "", price: 10.5 }] }))).toMatchObject({ ok: false, field: "variants" });
+});
+
+test("priceRange spans the cheapest and dearest option", () => {
+  const { id } = createProduct(sample({ price: 30000, variants: [{ name: "A", stock: 1, sku: "", price: 23100 }, { name: "B", stock: 1, sku: "" }, { name: "C", stock: 1, sku: "", price: 47300 }] })) as { ok: true; id: number };
+  expect(priceRange(getProductById(id)!)).toEqual({ min: 23100, max: 47300 });
+  expect(priceRange(getProductById((createProduct(sample({ slug: "plain" })) as { ok: true; id: number }).id)!)).toEqual({ min: 45000, max: 45000 });
 });

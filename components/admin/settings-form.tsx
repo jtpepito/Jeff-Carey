@@ -14,6 +14,7 @@ const FIELDS: Field[] = [
   { name: "feeVismin", label: "Visayas / Mindanao shipping fee", hint: "All Visayas and Mindanao provinces.", money: true, group: "vismin" },
   { name: "gcashNumber", label: "GCash number", hint: "Shown at checkout when a customer chooses GCash.", money: false },
   { name: "labourRate", label: "Labour rate per hour", hint: "Used to cost the labour minutes in each recipe.", money: true },
+  { name: "targetMarkup", label: "Target markup", hint: "Suggested price = cost before packaging × this number, plus packaging. 5 means a ₱10 roll is suggested at ₱50 plus its box.", money: false },
   { name: "pickupInfo", label: "Pickup details", hint: "Shown at checkout and on the receipt when a customer chooses pickup: the address and the hours.", money: false },
 ];
 
@@ -48,7 +49,7 @@ export function SettingsForm({ initial, groups, area }: { initial: SettingsFormV
             <input
               id={`s-${f.name}`}
               className={f.money ? "field pl-8" : "field"}
-              inputMode={f.money ? "decimal" : f.name === "gcashNumber" ? "tel" : "text"}
+              inputMode={f.money || f.name === "targetMarkup" ? "decimal" : f.name === "gcashNumber" ? "tel" : "text"}
               value={values[f.name]}
               onChange={(e) => setValues((v) => ({ ...v, [f.name]: e.target.value }))}
             />

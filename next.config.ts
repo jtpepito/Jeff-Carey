@@ -7,7 +7,7 @@ const nextConfig: NextConfig = {
     minimumCacheTTL: 60 * 60 * 24 * 30,
   },
   // Puts the stylesheet in the HTML so the first paint doesn't wait on a second request.
-  experimental: { inlineCss: true },
+  experimental: { inlineCss: false },
 };
 
 export default nextConfig;
