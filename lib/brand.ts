@@ -6,15 +6,15 @@ export const brand = {
   prefix: "JC",
   /** Provinces we deliver to, spelled as in data/ph-locations.json. Leave empty to deliver nationwide. */
   deliveryProvinces: ["Cebu"] as string[],
-  heroEyebrow: "Small batch · Baked to order · Cebu",
-  heroHeadline: "Baked for your order, not for a shelf.",
-  tagline: "Cinnamon rolls and cupcakes, baked to order in Cebu.",
-  promise: "Real-butter dough, proofed overnight and frozen at its best. It goes into the oven only when your order comes in, so what reaches you was baked for you.",
-  storyHeadline: "Why we freeze the dough.",
+  heroEyebrow: "Cebu · Small batch · Baked to order",
+  heroHeadline: "The oven goes on when your order comes in.",
+  tagline: "Cinnamon rolls and cupcakes, baked in Cebu only after you order.",
+  promise: "Real butter. Dough proofed overnight and frozen at its peak. Nothing is baked until you order, so your rolls arrive soft in the middle, with the bake date on the box.",
+  storyHeadline: "The freezer is how we keep it fresh."
   story: [
-    "Jef&Carey started with a tray of cinnamon rolls baked for a neighbour's birthday. The neighbour asked for two more trays the following week.",
-    "Freezing is how a small kitchen bakes to order. We mix the dough with real butter, proof it overnight and freeze it in small batches at its best, so every order can go into the oven the moment it comes in instead of waiting on a shelf.",
-    "Every box carries its bake date. If it says today, it was baked today, for you.",
+    "Jef&Carey started with one tray of cinnamon rolls, baked for a neighbour's birthday. She asked for two more trays the next week, and we have been baking to order since.",
+    "A bakery that bakes ahead sells you yesterday. We mix the dough with real butter, proof it overnight, then freeze it in small batches at its peak. When your order comes in, that dough goes straight into the oven: soft centre, caramelised edges, frosting spread while the rolls are still warm.",
+    "Every box carries its bake date. That date is the day we baked for you, and no one else.",
   ],
   storyImageAlt: "Freshly baked bread and pastries on bakery shelves",
   shippingCopy: [
@@ -28,7 +28,7 @@ export const brand = {
     { q: "How long does delivery take?", a: "Your order goes into the oven after it comes in and leaves our kitchen within 2 business days. Cebu City, Mandaue, Lapu-Lapu and Talisay usually get it the same day it leaves us; towns further out, the next day." },
     { q: "Can I pay cash on delivery?", a: "Yes, anywhere in Cebu. Have the exact amount ready for the rider." },
     { q: "How does GCash payment work?", a: "Send the order total to the GCash number shown at checkout, then type the reference number from your GCash receipt into the form. We check it within a day and then start baking." },
-    { q: "Why do you freeze the dough?", a: "It is how a small kitchen bakes to order. The dough is mixed, proofed overnight and frozen at its best, then baked only for the orders that come in. Nothing is baked ahead and left waiting." },
+    { q: "Why do you freeze the dough?", a: "So we never have to bake ahead. The dough is mixed with real butter, proofed overnight and frozen at its peak. It is baked only for orders in hand, which is why nothing of ours sits on a shelf." },
     { q: "How long do your bakes stay fresh?", a: "They are baked for your order, so they reach you at their best. Cinnamon rolls keep 3 days at room temperature and reheat well; the cupcakes keep 4 days in the ref." },
     { q: "What if something arrives damaged?", a: "Send us a photo within 2 days of delivery and we'll replace it or refund you, your choice." },
   ],
