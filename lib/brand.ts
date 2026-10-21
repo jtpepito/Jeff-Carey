@@ -10,7 +10,7 @@ export const brand = {
   heroHeadline: "The oven goes on when your order comes in.",
   tagline: "Cinnamon rolls and cupcakes, baked in Cebu only after you order.",
   promise: "Real butter. Dough proofed overnight and frozen at its peak. Nothing is baked until you order, so your rolls arrive soft in the middle, with the bake date on the box.",
-  storyHeadline: "The freezer is how we keep it fresh."
+  storyHeadline: "The freezer is how we keep it fresh.",
   story: [
     "Jef&Carey started with one tray of cinnamon rolls, baked for a neighbour's birthday. She asked for two more trays the next week, and we have been baking to order since.",
     "A bakery that bakes ahead sells you yesterday. We mix the dough with real butter, proof it overnight, then freeze it in small batches at its peak. When your order comes in, that dough goes straight into the oven: soft centre, caramelised edges, frosting spread while the rolls are still warm.",
