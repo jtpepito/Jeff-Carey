@@ -39,6 +39,18 @@ The store is at http://localhost:3010 and the console at http://localhost:3010/a
 `npm run seed` wipes the database and loads 12 products and 15 orders. Skip it to start with an
 empty shop; every page has an empty state.
 
+## Deploying
+
+The store runs on Fly.io (`fly.toml`, `Dockerfile`): one small machine in Singapore with a 1 GB volume at
+`/data` holding `store.db`. Set the admin password once with `fly secrets set ADMIN_PASSWORD=...`, then:
+
+```bash
+fly deploy --app jef-carey --ha=false --remote-only --depot=false
+```
+
+A freshly deployed shop is empty; the admin dashboard offers a one-tap "Load the menu and sample data" button
+that runs the seed once.
+
 ## Commands
 
 | Command | What it does |

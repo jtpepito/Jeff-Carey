@@ -19,4 +19,6 @@ test("admin on an unseeded database shows empty states", async ({ page }) => {
   await expect(page.getByText("No orders yet")).toBeVisible();
   await page.goto("/admin/products");
   await expect(page.getByText("No products yet")).toBeVisible();
+  await page.goto("/admin");
+  await expect(page.getByRole("button", { name: "Load the menu and sample data" })).toBeVisible();
 });

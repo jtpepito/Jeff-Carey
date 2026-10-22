@@ -4,13 +4,15 @@ import { AdminEmpty } from "@/components/admin/admin-empty";
 import { OrderRows } from "@/components/admin/order-rows";
 import { formatPeso } from "@/lib/money";
 import { dashboardStats } from "@/lib/orders";
-import { lowStockVariants } from "@/lib/products";
+import { listProducts, lowStockVariants } from "@/lib/products";
+import { LoadStarterData } from "@/components/admin/load-starter-data";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 export default function DashboardPage() {
   const { todayOrders, todayRevenue, pendingCount } = dashboardStats();
   const low = lowStockVariants();
+  const noProducts = listProducts({ includeInactive: true }).length === 0;
   const stats = [
     { label: "Orders today", value: String(todayOrders.length) },
     { label: "Revenue today", value: formatPeso(todayRevenue) },
@@ -21,6 +23,7 @@ export default function DashboardPage() {
   return (
     <>
       <h1 className="text-3xl">Dashboard</h1>
+      {noProducts ? <div className="mt-5"><LoadStarterData /></div> : null}
       <dl className="mt-5 grid grid-cols-2 gap-3 md:grid-cols-4">
         {stats.map((s) => {
           const body = (

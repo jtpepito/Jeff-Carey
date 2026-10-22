@@ -123,6 +123,14 @@ const ORDERS: SeedOrder[] = [
 const PATH: OrderStatus[] = ["confirmed", "shipped", "delivered"];
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Loads the starter data only when the shop has no products at all. */
+export function seedIfEmpty(): { ok: true } | { ok: false; error: string } {
+  const count = (getDb().prepare("SELECT COUNT(*) AS c FROM products").get() as { c: number }).c;
+  if (count > 0) return { ok: false, error: "The shop already has products, so nothing was loaded." };
+  seed();
+  return { ok: true };
+}
+
 /** Wipes every table, then loads the real menu, its recipes and some sample orders. */
 export function seed(now: Date = new Date()): void {
   const db = getDb();

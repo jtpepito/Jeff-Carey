@@ -4,7 +4,7 @@ import { listOrders } from "@/lib/orders";
 import { priceRange } from "@/lib/pricing";
 import { listCategories, listProducts } from "@/lib/products";
 import { getRecipe, listComponents, listIngredients, productCosts } from "@/lib/recipes";
-import { seed } from "@/lib/seed-data";
+import { seed, seedIfEmpty } from "@/lib/seed-data";
 import { freshDb } from "./helpers";
 
 beforeEach(freshDb);
@@ -56,4 +56,11 @@ test("seeding twice gives the same counts", () => {
   expect(listProducts()).toHaveLength(5);
   expect(listOrders()).toHaveLength(15);
   expect(listComponents()).toHaveLength(5);
+});
+
+test("seedIfEmpty loads the menu only into an empty shop", () => {
+  expect(seedIfEmpty()).toEqual({ ok: true });
+  expect(listProducts()).toHaveLength(5);
+  expect(seedIfEmpty()).toMatchObject({ ok: false });
+  expect(listProducts()).toHaveLength(5);
 });

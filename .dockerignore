@@ -1,0 +1,14 @@
+# Never ship local data, secrets, tests or build output into the image.
+node_modules
+.next
+data/*.db*
+.env*
+!.env.example
+.git
+.superpowers
+tests
+e2e
+test-results
+playwright-report
+docs
+*.log
