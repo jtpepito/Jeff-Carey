@@ -4,7 +4,7 @@ import { listOrders } from "@/lib/orders";
 import { priceRange } from "@/lib/pricing";
 import { listCategories, listProducts } from "@/lib/products";
 import { getRecipe, listComponents, listIngredients, productCosts } from "@/lib/recipes";
-import { seed, seedIfEmpty } from "@/lib/seed-data";
+import { applySeedPhotos, seed, seedIfEmpty } from "@/lib/seed-data";
 import { freshDb } from "./helpers";
 
 beforeEach(freshDb);
@@ -63,4 +63,13 @@ test("seedIfEmpty loads the menu only into an empty shop", () => {
   expect(listProducts()).toHaveLength(5);
   expect(seedIfEmpty()).toMatchObject({ ok: false });
   expect(listProducts()).toHaveLength(5);
+});
+
+test("applySeedPhotos swaps stand-in photos for the ones shipped with the app, by slug", () => {
+  seed();
+  getDb().prepare("UPDATE products SET images = ? WHERE slug = ?").run(JSON.stringify(["https://images.unsplash.com/photo-x"]), "og-cinnamon-rolls");
+  expect(applySeedPhotos()).toBe(1);
+  const og = listProducts().find((p) => p.slug === "og-cinnamon-rolls")!;
+  expect(og.images).toEqual(["/products/original.jpg", "/products/cover-1.jpg"]);
+  expect(applySeedPhotos()).toBe(0); // nothing left to change
 });

@@ -124,6 +124,17 @@ const ORDERS: SeedOrder[] = [
 const PATH: OrderStatus[] = ["confirmed", "shipped", "delivered"];
 const DAY_MS = 24 * 60 * 60 * 1000;
 
+/** Gives existing products the photos shipped with the app, matched by slug. Returns how many changed. */
+export function applySeedPhotos(): number {
+  let changed = 0;
+  const update = getDb().prepare("UPDATE products SET images = ? WHERE slug = ? AND images <> ?");
+  for (const p of PRODUCTS) {
+    const images = JSON.stringify(p.photos.map((ph) => (ph.startsWith("/") ? ph : img(ph))));
+    changed += Number(update.run(images, p.slug, images).changes);
+  }
+  return changed;
+}
+
 /** Loads the starter data only when the shop has no products at all. */
 export function seedIfEmpty(): { ok: true } | { ok: false; error: string } {
   const count = (getDb().prepare("SELECT COUNT(*) AS c FROM products").get() as { c: number }).c;

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { AdminEmpty } from "@/components/admin/admin-empty";
+import { UseShippedPhotos } from "@/components/admin/use-shipped-photos";
 import { canOptimise } from "@/components/store/product-image";
 import { formatPeso } from "@/lib/money";
 import { priceRange } from "@/lib/pricing";
@@ -13,11 +14,15 @@ export const metadata: Metadata = { title: "Products" };
 export default function ProductsPage() {
   const products = listProducts({ includeInactive: true });
   const costs = productCosts();
+  const usingStockPhotos = products.some((p) => p.images.some((u) => u.includes("images.unsplash.com")));
   return (
     <>
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-3xl">Products</h1>
-        <Link href="/admin/products/new" className="btn btn-primary">New product</Link>
+        <div className="flex flex-wrap gap-3">
+          {usingStockPhotos ? <UseShippedPhotos /> : null}
+          <Link href="/admin/products/new" className="btn btn-primary">New product</Link>
+        </div>
       </div>
       <div className="mt-5">
         {products.length === 0 ? (
