@@ -5,6 +5,7 @@ import { regionGroupOf, type RegionGroup } from "@/lib/ph-locations";
 import { MAX_LEAD_DAYS, MIN_LEAD_DAYS } from "@/lib/orders";
 import { getSettings } from "@/lib/settings";
 import { manilaDate } from "@/lib/time";
+import { pickupOnly } from "@/lib/fulfilment";
 
 export const metadata: Metadata = { title: "Checkout" };
 
@@ -18,6 +19,7 @@ export default function CheckoutPage() {
         provinces={names}
         groups={groups}
         settings={getSettings()}
+        pickupOnly={pickupOnly()}
         dates={{ min: manilaDate(new Date(), MIN_LEAD_DAYS), max: manilaDate(new Date(), MAX_LEAD_DAYS), leadDays: MIN_LEAD_DAYS }}
       />
     </div>

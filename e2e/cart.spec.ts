@@ -1,22 +1,16 @@
 import { expect, test } from "@playwright/test";
 
-test("add to cart, change qty, free-shipping bar, persistence", async ({ page }) => {
+test("add to cart, change qty, pickup-only note, persistence", async ({ page }) => {
   await page.goto("/product/og-cinnamon-rolls"); // Box of 4 ₱231
   await page.getByRole("button", { name: "Add to cart" }).click();
   const drawer = page.getByRole("dialog");
   await expect(drawer).toContainText("OG Cinnamon Rolls");
-  await expect(drawer).toContainText("₱1,269 away from free shipping");
+  await expect(drawer).toContainText("Pick-up only. No delivery fee.");
+  await expect(drawer).not.toContainText("free shipping");
   await drawer.getByRole("button", { name: "Increase quantity" }).click();
-  await expect(drawer).toContainText("₱1,038 away from free shipping");
+  await expect(drawer).toContainText("₱462");
   await page.reload();
   await expect(page.getByRole("button", { name: "Open cart" })).toContainText("2");
-});
-
-test("free-shipping message appears at the threshold", async ({ page }) => {
-  await page.goto("/product/choco-cinnamon-rolls"); // Box of 4 ₱313 x 5 = ₱1,565
-  for (let i = 0; i < 4; i++) await page.getByRole("button", { name: "Increase quantity" }).click();
-  await page.getByRole("button", { name: "Add to cart" }).click();
-  await expect(page.getByRole("dialog")).toContainText("You've unlocked free shipping");
 });
 
 test("removing the last item shows the empty cart", async ({ page }) => {

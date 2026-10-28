@@ -156,3 +156,15 @@ test("pickup orders carry a preferred date too", () => {
   expect(placeOrder(order({ fulfilment: "pickup", preferredDate: "2026-10-08" }), NOW)).toMatchObject({ ok: true });
   expect(placeOrder(order({ fulfilment: "pickup", preferredDate: "" }), NOW)).toMatchObject({ ok: false, field: "preferredDate" });
 });
+
+test("when the shop is pickup-only, delivery orders are refused and pickup is the default", () => {
+  process.env.ALLOW_DELIVERY = "";
+  try {
+    expect(placeOrder(order({ fulfilment: "delivery" }), NOW)).toMatchObject({ ok: false, field: "fulfilment" });
+    expect(orderCount()).toBe(0);
+    expect(placeOrder(order({ fulfilment: undefined, province: "", city: "", address: "" }), NOW)).toMatchObject({ ok: true });
+    expect((getDb().prepare("SELECT fulfilment f FROM orders").get() as { f: string }).f).toBe("pickup");
+  } finally {
+    process.env.ALLOW_DELIVERY = "1";
+  }
+});

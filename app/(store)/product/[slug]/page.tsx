@@ -43,7 +43,7 @@ export default async function ProductPage({ params }: Props) {
             tabs={[
               { id: "details", label: "Details", paragraphs: paragraphs(product.description) },
               { id: "how", label: "How to use", paragraphs: paragraphs(product.howToUse) },
-              { id: "shipping", label: "Shipping", paragraphs: brand.shippingCopy },
+              { id: "shipping", label: brand.pickupOnly ? "Pick-up" : "Shipping", paragraphs: brand.shippingCopy },
             ].filter((t) => t.paragraphs.length > 0)}
           />
         </div>

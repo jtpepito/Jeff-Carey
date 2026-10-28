@@ -90,6 +90,9 @@ Stop any running dev or production server before `npm run build` or `npm run e2e
   prices yet and were not imported.
 - **Preferred date**: every order carries the day the customer wants it delivered or picked up, at least
   `MIN_LEAD_DAYS` (2) and at most `MAX_LEAD_DAYS` (60) days out, Manila time. Staff see it as "Wanted by".
+- **Pickup-only mode**: `pickupOnly: true` in `lib/brand.ts` (the current setting). Checkout offers no delivery
+  choice, address or fee, the cart drops its free-shipping bar, and settings hide the fee fields. Set it to
+  false to bring delivery back.
 - **Pickup**: shoppers can choose pickup at checkout (no address, no delivery fee). The pickup
   address and hours shown to them are the "Pickup details" field in `/admin/settings`.
 - **Delivery area**: `deliveryProvinces` in `lib/brand.ts` (currently Cebu only; an empty list means

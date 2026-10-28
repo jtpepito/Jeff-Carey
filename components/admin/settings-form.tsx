@@ -18,9 +18,9 @@ const FIELDS: Field[] = [
   { name: "pickupInfo", label: "Pickup details", hint: "Shown at checkout and on the receipt when a customer chooses pickup: the address and the hours.", money: false },
 ];
 
-export function SettingsForm({ initial, groups, area }: { initial: SettingsFormValues; groups: RegionGroup[]; area: string }) {
+export function SettingsForm({ initial, groups, area, pickupOnly }: { initial: SettingsFormValues; groups: RegionGroup[]; area: string; pickupOnly: boolean }) {
   // Fees for regions outside the delivery area are hidden; their stored values are sent back unchanged.
-  const fields = FIELDS.filter((f) => !f.group || groups.includes(f.group)).map((f) =>
+  const fields = FIELDS.filter((f) => !(pickupOnly && (f.group || f.name === "freeShippingThreshold"))).filter((f) => !f.group || groups.includes(f.group)).map((f) =>
     f.group && groups.length === 1 ? { ...f, label: "Delivery fee", hint: `Charged on orders below the free-shipping threshold. Delivery area: ${area}.` } : f,
   );
   const [values, setValues] = useState(initial);

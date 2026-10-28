@@ -7,10 +7,7 @@ test("a storefront order appears as new with correct totals, then cancel restore
   await page.getByRole("dialog").getByRole("link", { name: /checkout/i }).click();
   await page.getByLabel("Full name").fill("Carlo Dizon");
   await page.getByLabel("Mobile number").fill("09181112222");
-  await page.getByLabel("Province").selectOption("Cebu");
-  await page.getByLabel("City / Municipality").selectOption("Talisay City");
-  await page.getByLabel("Street address").fill("5 Session Rd");
-  await page.getByLabel("Preferred delivery date").fill(earliestDate(4));
+  await page.getByLabel("Preferred pickup date").fill(earliestDate(4));
   await page.getByLabel("GCash", { exact: true }).check();
   await page.getByLabel("GCash reference number").fill("9988776655443");
   await page.getByRole("button", { name: "Place order" }).click();
@@ -19,7 +16,7 @@ test("a storefront order appears as new with correct totals, then cancel restore
 
   await signIn(page);
 
-  // Stock of "Original" after the order, read from the product editor.
+  // Stock of "Single" after the order, read from the product editor.
   await page.goto("/admin/products");
   await page.getByRole("link", { name: /Vanilla Cupcake/ }).click();
   const stockAfterOrder = Number(await page.getByLabel("Variant 1 stock").inputValue());
@@ -27,7 +24,7 @@ test("a storefront order appears as new with correct totals, then cancel restore
   await page.goto("/admin/orders?status=new");
   const row = page.getByRole("link", { name: new RegExp(code) });
   await expect(row).toContainText("Carlo Dizon");
-  await expect(row).toContainText("₱260"); // 100 + 160 delivery
+  await expect(row).toContainText("₱100"); // pickup: no fee
   await row.click();
   await expect(page.getByText("GCash ref: 9988776655443")).toBeVisible();
   await expect(page.getByText("Vanilla Cupcake — Single")).toBeVisible();

@@ -2,6 +2,7 @@ import { getDb } from "./db";
 import { changeStatus, getOrderByCode, placeOrder, type OrderStatus } from "./orders";
 import { createProduct, listProducts, type ProductInput } from "./products";
 import { manilaDate } from "./time";
+import { pickupOnly } from "./fulfilment";
 import { applySuggestedPrice, saveComponent, saveIngredient, saveRecipe } from "./recipes";
 
 // Ingredient prices, recipes and packaging come from the owner's "Recipe Costing File.xlsx" (Oct 2026).
@@ -216,7 +217,7 @@ export function seed(now: Date = new Date()): void {
     const r = placeOrder(
       {
         customerName: o.name, mobile: o.mobile, province: "Cebu", city: o.city, address: o.address, preferredDate: manilaDate(placedAt, 3),
-        notes: o.notes, fulfilment: o.pickup ? "pickup" : "delivery", paymentMethod: o.gcashRef ? "gcash" : "cod", gcashRef: o.gcashRef,
+        notes: o.notes, fulfilment: o.pickup || pickupOnly() ? "pickup" : "delivery", paymentMethod: o.gcashRef ? "gcash" : "cod", gcashRef: o.gcashRef,
         lines: o.items.map(([slug, variant, qty]) => ({ variantId: variantId.get(`${slug}|${variant}`) ?? -1, qty })),
       },
       placedAt,

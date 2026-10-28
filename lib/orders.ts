@@ -1,5 +1,6 @@
 import { getDb, tx } from "./db";
 import { deliversTo, deliveryProvinces } from "./delivery";
+import { pickupOnly } from "./fulfilment";
 import { nextOrderCode } from "./order-code";
 import { isValidLocation, regionGroupOf } from "./ph-locations";
 import { getSettings } from "./settings";
@@ -37,7 +38,7 @@ const fail = (field: string, error: string): PlaceResult => ({ ok: false, field,
 export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResult {
   const customerName = input.customerName?.trim() ?? "";
   const mobile = (input.mobile ?? "").replace(/[\s-]/g, "");
-  const fulfilment = input.fulfilment ?? "delivery";
+  const fulfilment = input.fulfilment ?? (pickupOnly() ? "pickup" : "delivery");
   const pickup = fulfilment === "pickup";
   const address = pickup ? "" : (input.address?.trim() ?? "");
   const gcashRef = input.gcashRef?.trim() ?? "";
@@ -45,6 +46,7 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
   if (!customerName) return fail("customerName", "Enter your name.");
   if (!/^09\d{9}$/.test(mobile)) return fail("mobile", "Enter an 11-digit mobile number starting with 09.");
   if (fulfilment !== "delivery" && fulfilment !== "pickup") return fail("fulfilment", "Choose delivery or pickup.");
+  if (fulfilment === "delivery" && pickupOnly()) return fail("fulfilment", "All orders are for pick-up at the moment.");
   const group = pickup ? null : regionGroupOf(input.province);
   if (!pickup) {
     if (!group) return fail("province", "Choose a province.");

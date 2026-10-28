@@ -5,6 +5,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from "
 import { subtotalOf } from "@/lib/cart";
 import { formatPeso } from "@/lib/money";
 import { useCart } from "./cart-provider";
+import { brand } from "@/lib/brand";
 import { ProductImage } from "./product-image";
 import { QtyStepper } from "./qty-stepper";
 import { ShippingProgress } from "./shipping-progress";
@@ -64,7 +65,7 @@ export function CartDrawer() {
 
         {lines.length > 0 ? (
           <div className="space-y-3 border-t border-border bg-card px-5 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-            <ShippingProgress subtotal={subtotal} threshold={threshold} />
+            {brand.pickupOnly ? null : <ShippingProgress subtotal={subtotal} threshold={threshold} />}
             <div className="flex items-baseline justify-between">
               <p className="text-[15px] text-muted-foreground">Subtotal</p>
               <p className="text-xl font-semibold tabular-nums">{formatPeso(subtotal)}</p>
@@ -72,7 +73,7 @@ export function CartDrawer() {
             <Link href="/checkout" onClick={close} className="btn btn-primary w-full">
               Checkout
             </Link>
-            <p className="text-center text-xs text-muted-foreground">Shipping is calculated at checkout.</p>
+            <p className="text-center text-xs text-muted-foreground">{brand.pickupOnly ? "Pick-up only. No delivery fee." : "Shipping is calculated at checkout."}</p>
           </div>
         ) : null}
       </SheetContent>

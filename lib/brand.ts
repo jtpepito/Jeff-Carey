@@ -4,6 +4,8 @@ export const brand = {
   prefix: "JC",
   /** Provinces we deliver to, spelled as in data/ph-locations.json. Leave empty to deliver nationwide. */
   deliveryProvinces: ["Cebu"] as string[],
+  /** True while every order is collected from the kitchen: checkout offers no delivery and charges no fee. */
+  pickupOnly: true,
   heroEyebrow: "Cebu · Small batch · Baked to order",
   heroHeadline: "The oven goes on when your order comes in.",
   tagline: "Cinnamon rolls and cupcakes, baked in Cebu only after you order.",
@@ -18,9 +20,9 @@ export const brand = {
   ],
   storyImageAlt: "A tray of Biscoff cinnamon rolls fresh from the oven",
   shippingCopy: [
-    "We deliver within Cebu province only, so everything arrives fresh.",
-    "Your order goes into the oven after it comes in and leaves our kitchen within 2 business days. Cebu City, Mandaue, Lapu-Lapu and Talisay usually get it the same day it leaves us; towns further out, the next day.",
-    "Cash on delivery is available anywhere in Cebu. Delivery is free once your order reaches the free-delivery amount shown in your cart.",
+    "All orders are for pick-up. Choose the day you want to collect at checkout, at least 2 days ahead, and we bake for that day.",
+    "Once your order is confirmed we'll message you the pick-up location and your time window. Please arrive within it so your bakes are at their freshest.",
+    "Pay in cash when you pick up, or send the total by GCash and enter the reference at checkout.",
   ],
   faqs: [
     { q: "How do I get my order?", a: "All orders are for pick-up. Once your order is confirmed, we'll provide the pick-up location, date, and time. Please arrive within your scheduled window to ensure your bakes are at their freshest." },

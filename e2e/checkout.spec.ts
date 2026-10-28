@@ -1,6 +1,8 @@
 import { expect, test, type Page } from "@playwright/test";
 import { earliestDate, signIn } from "./admin";
 
+// The shop is pickup-only: checkout asks for contact details and a pickup date, never an address.
+
 async function addAndCheckout(page: Page, slug: string, extraQty = 0) {
   await page.goto(`/product/${slug}`);
   for (let i = 0; i < extraQty; i++) await page.getByRole("button", { name: "Increase quantity" }).click();
@@ -9,37 +11,42 @@ async function addAndCheckout(page: Page, slug: string, extraQty = 0) {
   await expect(page).toHaveURL(/\/checkout/);
 }
 
-async function fillContact(page: Page, province = "Cebu", city = "Cebu City") {
+async function fillContact(page: Page) {
   await page.getByLabel("Full name").fill("Ana Reyes");
   await page.getByLabel("Mobile number").fill("09171234567");
-  await page.getByLabel("Province").selectOption(province);
-  await page.getByLabel("City / Municipality").selectOption(city);
-  await page.getByLabel("Street address").fill("12 Mabini St");
-  await page.getByLabel(/Preferred (delivery|pickup) date/).fill(earliestDate(3));
+  await page.getByLabel("Preferred pickup date").fill(earliestDate(3));
 }
 
-test("COD order: no reference field, correct totals, thank-you page", async ({ page }) => {
+test("checkout is pickup-only: no delivery choice, no address, no fee", async ({ page }) => {
   await addAndCheckout(page, "vanilla-cupcake"); // Single ₱100
+  await expect(page.getByLabel("Delivery", { exact: true })).toHaveCount(0);
+  await expect(page.getByLabel("Street address")).toHaveCount(0);
+  await expect(page.getByLabel("Province")).toHaveCount(0);
+  await expect(page.getByText("We'll text you the pickup address and time")).toBeVisible();
+  await expect(page.getByTestId("summary")).toContainText("No fee");
+  await expect(page.getByTestId("summary")).not.toContainText("₱160");
+  await expect(page.getByTestId("summary")).toContainText("Total₱100");
+});
+
+test("cash order: no reference field, pickup receipt, cart emptied", async ({ page }) => {
+  await addAndCheckout(page, "vanilla-cupcake");
   await fillContact(page);
-  await page.getByLabel("Cash on delivery").check();
+  await page.getByLabel("Cash on pickup").check();
   await expect(page.getByLabel("GCash reference number")).toHaveCount(0);
-  await expect(page.getByTestId("summary")).toContainText("₱160");
-  await expect(page.getByTestId("summary")).toContainText("₱260");
   await page.getByRole("button", { name: "Place order" }).click();
   await expect(page).toHaveURL(/\/thank-you\/JC-\d{4}-\d{4}/);
-  await expect(page.getByText(/pay the rider/i)).toBeVisible();
-  await expect(page.getByText("Preferred delivery date")).toBeVisible();
+  await expect(page.getByText(/pay in cash when you pick up/i)).toBeVisible();
   await expect(page.getByText("Vanilla Cupcake — Single")).toBeVisible();
-  // Order codes are guessable, so the receipt must not show who ordered or where it is going.
-  await expect(page.locator("main")).not.toContainText("Mabini");
+  await expect(page.getByText("Preferred pickup date")).toBeVisible();
+  // Order codes are guessable, so the receipt must not show who ordered.
   await expect(page.locator("main")).not.toContainText("Ana");
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Open cart" })).not.toContainText("1");
 });
 
-test("GCash order requires a reference", async ({ page }) => {
+test("GCash order requires a reference and keeps it off the receipt", async ({ page }) => {
   await addAndCheckout(page, "vanilla-cupcake");
-  await fillContact(page, "Cebu", "Cebu City");
+  await fillContact(page);
   await page.getByLabel("GCash", { exact: true }).check();
   await expect(page.getByText(/0917 000 0000/)).toBeVisible();
   await page.getByRole("button", { name: "Place order" }).click();
@@ -51,6 +58,53 @@ test("GCash order requires a reference", async ({ page }) => {
   await expect(page.locator("main")).not.toContainText("1234567890123");
 });
 
+test("field errors show beside the field, including a pickup date that is too soon", async ({ page }) => {
+  await addAndCheckout(page, "vanilla-cupcake");
+  await page.getByRole("button", { name: "Place order" }).click();
+  await expect(page.getByText("Enter your name.")).toBeVisible();
+  await fillContact(page);
+  await page.getByLabel("Mobile number").fill("12345");
+  await page.getByRole("button", { name: "Place order" }).click();
+  await expect(page.getByText("Enter an 11-digit mobile number starting with 09.")).toBeVisible();
+  await page.getByLabel("Mobile number").fill("09171234567");
+  await page.getByLabel("Preferred pickup date").fill(earliestDate(0));
+  await page.getByRole("button", { name: "Place order" }).click();
+  await expect(page.getByText(/at least 2 days/)).toBeVisible();
+});
+
+test("the admin sees the order as a pickup with its wanted-by date", async ({ page }) => {
+  await addAndCheckout(page, "og-cinnamon-rolls"); // Box of 4 ₱231
+  await page.getByLabel("Full name").fill("Lia Go");
+  await page.getByLabel("Mobile number").fill("09175556666");
+  await page.getByLabel("Preferred pickup date").fill(earliestDate(2));
+  await page.getByLabel("Cash on pickup").check();
+  await page.getByRole("button", { name: "Place order" }).click();
+  await page.waitForURL(/\/thank-you\/JC-\d{4}-\d{4}/);
+  const code = page.url().split("/").pop()!;
+
+  await signIn(page);
+  await page.goto("/admin/orders?status=new");
+  const row = page.getByRole("link", { name: new RegExp(code) });
+  await expect(row).toContainText("Pickup");
+  await expect(row).toContainText("₱231");
+  await expect(row).toContainText("Wanted");
+  await row.click();
+  await expect(page.getByText("Customer will pick up")).toBeVisible();
+  await expect(page.getByText("Collect ₱231 at pickup.")).toBeVisible();
+  await expect(page.getByText("Wanted by")).toBeVisible();
+});
+
+test("double tap on Place order creates one order", async ({ page }) => {
+  await addAndCheckout(page, "vanilla-cupcake");
+  await fillContact(page);
+  await page.getByLabel("Cash on pickup").check();
+  await page.getByRole("button", { name: "Place order" }).dblclick();
+  await expect(page).toHaveURL(/\/thank-you\/JC-\d{4}-\d{4}/);
+  const [prefix, month, n] = page.url().split("/").pop()!.split("-");
+  const next = `${prefix}-${month}-${String(Number(n) + 1).padStart(4, "0")}`;
+  expect((await page.request.get(`/thank-you/${next}`)).status()).toBe(404);
+});
+
 test("a dropped connection shows a retry message, and retrying places one order", async ({ page }) => {
   await addAndCheckout(page, "vanilla-cupcake");
   await fillContact(page);
@@ -60,83 +114,6 @@ test("a dropped connection shows a retry message, and retrying places one order"
   await page.unroute("**/checkout");
   await page.getByRole("button", { name: "Place order" }).click();
   await expect(page).toHaveURL(/\/thank-you\/JC-\d{4}-\d{4}/);
-});
-
-test("contact errors show beside the field", async ({ page }) => {
-  await addAndCheckout(page, "vanilla-cupcake");
-  await page.getByRole("button", { name: "Place order" }).click();
-  await expect(page.getByText("Enter your name.")).toBeVisible();
-  await fillContact(page);
-  await page.getByLabel("Preferred delivery date").fill(earliestDate(0));
-  await page.getByRole("button", { name: "Place order" }).click();
-  await expect(page.getByText(/at least 2 days/)).toBeVisible();
-  await page.getByLabel("Preferred delivery date").fill(earliestDate(3));
-  await page.getByLabel("Mobile number").fill("12345");
-  await page.getByRole("button", { name: "Place order" }).click();
-  await expect(page.getByText("Enter an 11-digit mobile number starting with 09.")).toBeVisible();
-});
-
-test("shipping is free in the summary at ₱1,500 or more", async ({ page }) => {
-  await addAndCheckout(page, "choco-cinnamon-rolls", 4); // ₱313 x 5 = ₱1,565
-  await fillContact(page, "Cebu", "Mandaue City");
-  await expect(page.getByTestId("summary")).toContainText("Free");
-});
-
-test("double tap on Place order creates one order", async ({ page }) => {
-  await addAndCheckout(page, "vanilla-cupcake");
-  await fillContact(page);
-  await page.getByLabel("Cash on delivery").check();
-  await page.getByRole("button", { name: "Place order" }).dblclick();
-  await expect(page).toHaveURL(/\/thank-you\/JC-\d{4}-\d{4}/);
-  const [prefix, month, n] = page.url().split("/").pop()!.split("-");
-  // If the double tap had made a second order, it would have taken the next number.
-  const next = `${prefix}-${month}-${String(Number(n) + 1).padStart(4, "0")}`;
-  expect((await page.request.get(`/thank-you/${next}`)).status()).toBe(404);
-});
-
-test("only Cebu can be chosen, and the delivery fee shows without picking a province", async ({ page }) => {
-  await addAndCheckout(page, "vanilla-cupcake"); // ₱100
-  await expect(page.getByLabel("Province").locator("option")).toHaveText(["Cebu"]);
-  await expect(page.getByTestId("summary")).toContainText("₱160");
-  await expect(page.getByTestId("summary")).toContainText("₱260");
-  await expect(page.getByLabel("City / Municipality").locator("option", { hasText: "Lapu-Lapu City" })).toHaveCount(1);
-  await expect(page.getByLabel("City / Municipality").locator("option", { hasText: "Quezon City" })).toHaveCount(0);
-});
-
-test("pickup: no address, no delivery fee, and the admin sees it as a pickup order", async ({ page }) => {
-  await addAndCheckout(page, "vanilla-cupcake"); // Single ₱100
-  await page.getByLabel("Full name").fill("Lia Go");
-  await page.getByLabel("Mobile number").fill("09175556666");
-  await expect(page.getByTestId("summary")).toContainText("₱260"); // delivery is the default: 100 + 160
-  await page.getByLabel("Pickup", { exact: true }).check();
-  await page.getByLabel("Preferred pickup date").fill(earliestDate(2));
-  await expect(page.getByLabel("Street address")).toHaveCount(0);
-  await expect(page.getByLabel("Province")).toHaveCount(0);
-  await expect(page.getByText("We'll text you the pickup address and time")).toBeVisible();
-  await expect(page.getByTestId("summary")).not.toContainText("₱160");
-  await expect(page.getByTestId("summary")).not.toContainText("₱260");
-  await page.getByLabel("Cash on pickup").check();
-  await page.getByRole("button", { name: "Place order" }).click();
-  await expect(page).toHaveURL(/\/thank-you\/JC-\d{4}-\d{4}/);
-  await expect(page.getByText(/pay in cash when you pick up/i)).toBeVisible();
-  const code = page.url().split("/").pop()!;
-
-  await signIn(page);
-  await page.goto("/admin/orders?status=new");
-  const row = page.getByRole("link", { name: new RegExp(code) });
-  await expect(row).toContainText("Pickup");
-  await expect(row).toContainText("₱100");
-  await row.click();
-  await expect(page.getByText("Customer will pick up")).toBeVisible();
-  await expect(page.getByText("Collect ₱100 at pickup.")).toBeVisible();
-});
-
-test("switching back to delivery brings the address fields and fee back", async ({ page }) => {
-  await addAndCheckout(page, "vanilla-cupcake");
-  await page.getByLabel("Pickup", { exact: true }).check();
-  await page.getByLabel("Delivery", { exact: true }).check();
-  await expect(page.getByLabel("Street address")).toBeVisible();
-  await expect(page.getByTestId("summary")).toContainText("₱260");
 });
 
 test("empty cart at checkout shows an empty state", async ({ page }) => {

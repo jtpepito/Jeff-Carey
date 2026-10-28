@@ -16,11 +16,13 @@ type Props = {
   provinces: string[]; groups: Record<string, RegionGroup>; settings: Settings;
   /** Allowed preferred-date window, as YYYY-MM-DD in Manila time. */
   dates: { min: string; max: string; leadDays: number };
+  /** No delivery choice, address or fee: every order is collected. */
+  pickupOnly: boolean;
 };
 type Payment = "cod" | "gcash";
 type Fulfilment = "delivery" | "pickup";
 
-export function CheckoutForm({ provinces, groups, settings, dates }: Props) {
+export function CheckoutForm({ provinces, groups, settings, dates, pickupOnly }: Props) {
   const router = useRouter();
   const { lines, ready, notices, refresh } = useCart();
   // With a single delivery province there is nothing to choose, so it starts selected.
@@ -28,7 +30,7 @@ export function CheckoutForm({ provinces, groups, settings, dates }: Props) {
   const [city, setCity] = useState("");
   const [cities, setCities] = useState<string[]>([]);
   const [payment, setPayment] = useState<Payment>("cod");
-  const [fulfilment, setFulfilment] = useState<Fulfilment>("delivery");
+  const [fulfilment, setFulfilment] = useState<Fulfilment>(pickupOnly ? "pickup" : "delivery");
   const [error, setError] = useState<{ field: string; message: string } | null>(null);
   const [placed, setPlaced] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -124,11 +126,15 @@ export function CheckoutForm({ provinces, groups, settings, dates }: Props) {
         </fieldset>
 
         <fieldset>
-          <legend className="font-heading text-2xl">Delivery or pickup</legend>
+          <legend className="font-heading text-2xl">{pickupOnly ? "Pick-up" : "Delivery or pickup"}</legend>
+          {pickupOnly ? (
+            <p className="mt-2 rounded-2xl bg-muted p-4 text-[15px] leading-relaxed">{settings.pickupInfo}</p>
+          ) : (
           <div className="mt-4 space-y-3">
             <RadioCard name="fulfilment" id="ful-delivery" label="Delivery" hint={`We bring it to your address in ${provinces.length <= 3 ? provinces.join(", ") : "your province"}.`} checked={!pickup} onSelect={() => setFulfilment("delivery")} />
             <RadioCard name="fulfilment" id="ful-pickup" label="Pickup" hint="Collect it from us. No delivery fee." checked={pickup} onSelect={() => setFulfilment("pickup")} />
           </div>
+          )}
           {errorFor("fulfilment")}
           <div className="mt-4 sm:max-w-xs">
             <label htmlFor="f-preferredDate" className="field-label">{pickup ? "Preferred pickup date" : "Preferred delivery date"}</label>
@@ -140,8 +146,12 @@ export function CheckoutForm({ provinces, groups, settings, dates }: Props) {
 
         {pickup ? (
           <fieldset className="space-y-4">
-            <legend className="font-heading text-2xl">Pickup</legend>
-            <p className="rounded-2xl bg-muted p-4 text-[15px] leading-relaxed">{settings.pickupInfo}</p>
+            {pickupOnly ? null : (
+              <>
+                <legend className="font-heading text-2xl">Pickup</legend>
+                <p className="rounded-2xl bg-muted p-4 text-[15px] leading-relaxed">{settings.pickupInfo}</p>
+              </>
+            )}
             <div>
               <label htmlFor="f-notes" className="field-label">Notes <span className="font-normal text-muted-foreground">(optional)</span></label>
               <textarea id="f-notes" name="notes" className="field" rows={2} maxLength={500} placeholder="Preferred pickup day or time, or who will collect" />
