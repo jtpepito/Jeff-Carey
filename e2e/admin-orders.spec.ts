@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { signIn } from "./admin";
+import { earliestDate, signIn } from "./admin";
 
 test("a storefront order appears as new with correct totals, then cancel restores stock", async ({ page }) => {
   await page.goto("/product/vanilla-cupcake"); // Single ₱100
@@ -10,6 +10,7 @@ test("a storefront order appears as new with correct totals, then cancel restore
   await page.getByLabel("Province").selectOption("Cebu");
   await page.getByLabel("City / Municipality").selectOption("Talisay City");
   await page.getByLabel("Street address").fill("5 Session Rd");
+  await page.getByLabel("Preferred delivery date").fill(earliestDate(4));
   await page.getByLabel("GCash", { exact: true }).check();
   await page.getByLabel("GCash reference number").fill("9988776655443");
   await page.getByRole("button", { name: "Place order" }).click();
@@ -30,6 +31,7 @@ test("a storefront order appears as new with correct totals, then cancel restore
   await row.click();
   await expect(page.getByText("GCash ref: 9988776655443")).toBeVisible();
   await expect(page.getByText("Vanilla Cupcake — Single")).toBeVisible();
+  await expect(page.getByText("Wanted by")).toBeVisible();
 
   await page.getByLabel("Internal notes").fill("Verified payment");
   await page.getByRole("button", { name: "Save notes" }).click();

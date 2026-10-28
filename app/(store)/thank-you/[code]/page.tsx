@@ -5,6 +5,7 @@ import { ClearCart } from "@/components/store/clear-cart";
 import { formatPeso } from "@/lib/money";
 import { getOrderByCode } from "@/lib/orders";
 import { getSettings } from "@/lib/settings";
+import { formatDateOnly } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Thank you", robots: { index: false } };
 
@@ -46,6 +47,12 @@ export default async function ThankYouPage({ params }: { params: Promise<{ code:
       <h1 className="mt-2 text-4xl leading-tight">Salamat!</h1>
       <p className="mt-3 text-[17px] text-muted-foreground">Keep this order code. We&apos;ll use it when we text you.</p>
       <p className="mt-4 inline-block rounded-2xl bg-primary px-5 py-3 font-heading text-3xl tracking-wide text-primary-foreground">{order.code}</p>
+
+      {order.preferredDate ? (
+        <p className="mt-5 rounded-2xl bg-muted px-4 py-3 text-[15px]">
+          <span className="font-semibold">{pickup ? "Preferred pickup date" : "Preferred delivery date"}:</span> {formatDateOnly(order.preferredDate)}. We&apos;ll confirm it by text.
+        </p>
+      ) : null}
 
       <section className="mt-9" aria-labelledby="next-heading">
         <h2 id="next-heading" className="text-2xl">What happens next</h2>

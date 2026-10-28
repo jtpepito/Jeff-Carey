@@ -87,7 +87,7 @@ export default function HomePage() {
               className="group relative block aspect-[16/10] overflow-hidden rounded-3xl bg-muted sm:aspect-[4/5]"
             >
               <ProductImage
-                src={c.cover.images[1] ?? c.cover.images[0]}
+                src={brand.categoryCovers[c.name] ?? c.cover.images[1] ?? c.cover.images[0]}
                 alt=""
                 sizes="(min-width: 640px) 33vw, 100vw"
                 className="transition-transform duration-500 group-hover:scale-[1.03]"
@@ -124,10 +124,10 @@ export default function HomePage() {
           <h2 id="gallery" className="text-3xl">From our kitchen to yours</h2>
           <p className="text-[15px] font-semibold text-gold-ink">{brand.social}</p>
         </div>
-        <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-6">
+        <div className="mt-5 grid grid-cols-3 gap-2 sm:gap-3 md:grid-cols-5">
           {brand.gallery.map((src, i) => (
             <div key={src} className="relative aspect-square overflow-hidden rounded-2xl bg-muted">
-              <ProductImage src={src} alt={`Customer photo ${i + 1}`} sizes="(min-width: 768px) 16vw, 33vw" />
+              <ProductImage src={src} alt={`Jef&Carey cinnamon rolls, photo ${i + 1}`} sizes="(min-width: 768px) 20vw, 33vw" />
             </div>
           ))}
         </div>

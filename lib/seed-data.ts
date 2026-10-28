@@ -1,6 +1,7 @@
 import { getDb } from "./db";
 import { changeStatus, getOrderByCode, placeOrder, type OrderStatus } from "./orders";
 import { createProduct, listProducts, type ProductInput } from "./products";
+import { manilaDate } from "./time";
 import { applySuggestedPrice, saveComponent, saveIngredient, saveRecipe } from "./recipes";
 
 // Ingredient prices, recipes and packaging come from the owner's "Recipe Costing File.xlsx" (Oct 2026).
@@ -17,7 +18,7 @@ type SeedProduct = Omit<ProductInput, "active" | "price" | "compareAt" | "images
   prices?: Record<string, number>;
 };
 
-const ROLL_PHOTOS = ["1509365465985-25d11c17e812", "1483695028939-5bb13f8648b0"];
+const ROLL_PHOTOS = ["1509365465985-25d11c17e812", "1483695028939-5bb13f8648b0"]; // Unsplash stand-ins (Oreo only)
 const ROLL_NOTES = "Dough proofs overnight. One batch is 42 rolls. Box of 4 and Box of 9 use the gold PF boxes with sticker and ribbon; the tray uses the WB130 foil pan.";
 // Packaging per unit sold, from the costing file: 7x7x4 box ₱28, 10x10x4 box ₱32, foil pan ₱13, sticker ₱2, ribbon ₱10.
 const ROLL_VARIANTS: SeedVariant[] = [["Box of 4", 20, "", 4, 40], ["Box of 9", 10, "", 9, 44], ["Tray of 36", 3, "", 36, 15]];
@@ -27,21 +28,21 @@ const PRODUCTS: SeedProduct[] = [
     slug: "og-cinnamon-rolls", name: "OG Cinnamon Rolls", category: "Cinnamon Rolls", featured: true,
     description: "Our original: soft, pull-apart rolls with a brown sugar and cinnamon swirl, topped with cream cheese frosting.",
     howToUse: "Best warm. 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature.",
-    photos: ROLL_PHOTOS, variants: ROLL_VARIANTS,
+    photos: ["/products/original.jpg", "/products/cover-1.jpg"], variants: ROLL_VARIANTS,
     recipe: { yield: 42, labour: 0, packaging: 40, notes: ROLL_NOTES, items: [["Cinnamon roll dough", 42], ["OG filling", 42], ["Cream cheese topping", 42]] },
   },
   {
     slug: "choco-cinnamon-rolls", name: "Choco Cinnamon Rolls", category: "Cinnamon Rolls", featured: true,
     description: "The cinnamon swirl gets cocoa in the filling, then cream cheese frosting and a dark chocolate drizzle on top.",
     howToUse: "Best warm. 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature.",
-    photos: ROLL_PHOTOS, variants: ROLL_VARIANTS,
+    photos: ["/products/chocolate.jpg", "/products/cover-1.jpg"], variants: ROLL_VARIANTS,
     recipe: { yield: 42, labour: 0, packaging: 40, notes: ROLL_NOTES, items: [["Cinnamon roll dough", 42], ["Choco filling", 42], ["Cream cheese topping", 42], ["Chocolate topping", 42]] },
   },
   {
     slug: "biscoff-cinnamon-rolls", name: "Biscoff Cinnamon Rolls", category: "Cinnamon Rolls", featured: false,
     description: "The original roll finished with cream cheese frosting and a layer of Biscoff on top.",
     howToUse: "Best warm. 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature.",
-    photos: ROLL_PHOTOS, variants: ROLL_VARIANTS,
+    photos: ["/products/biscoff.jpg", "/products/cover-2.jpg"], variants: ROLL_VARIANTS,
     recipe: { yield: 42, labour: 0, packaging: 40, notes: ROLL_NOTES, items: [["Cinnamon roll dough", 42], ["OG filling", 42], ["Cream cheese topping", 42], ["Biscoff spread", 210]] },
   },
   {
@@ -161,7 +162,7 @@ export function seed(now: Date = new Date()): void {
   for (const p of PRODUCTS) {
     const r = createProduct({
       slug: p.slug, name: p.name, category: p.category, description: p.description, howToUse: p.howToUse,
-      price: 0, compareAt: null, images: p.photos.map(img), featured: p.featured, active: true,
+      price: 0, compareAt: null, images: p.photos.map((ph) => (ph.startsWith("/") ? ph : img(ph))), featured: p.featured, active: true,
       variants: p.variants.map(([name, stock, sku]) => ({ name, stock, sku })),
     });
     if (!r.ok) throw new Error(`Seed product ${p.slug}: ${r.error}`);
@@ -200,13 +201,14 @@ export function seed(now: Date = new Date()): void {
   for (const p of listProducts()) for (const v of p.variants) variantId.set(`${p.slug}|${v.name}`, v.id);
 
   for (const o of ORDERS) {
+    const placedAt = new Date(now.getTime() - o.daysAgo * DAY_MS);
     const r = placeOrder(
       {
-        customerName: o.name, mobile: o.mobile, province: "Cebu", city: o.city, address: o.address,
+        customerName: o.name, mobile: o.mobile, province: "Cebu", city: o.city, address: o.address, preferredDate: manilaDate(placedAt, 3),
         notes: o.notes, fulfilment: o.pickup ? "pickup" : "delivery", paymentMethod: o.gcashRef ? "gcash" : "cod", gcashRef: o.gcashRef,
         lines: o.items.map(([slug, variant, qty]) => ({ variantId: variantId.get(`${slug}|${variant}`) ?? -1, qty })),
       },
-      new Date(now.getTime() - o.daysAgo * DAY_MS),
+      placedAt,
     );
     if (!r.ok) throw new Error(`Seed order for ${o.name}: ${r.error}`);
     const id = getOrderByCode(r.code)!.id;

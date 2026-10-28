@@ -43,7 +43,8 @@ CREATE TABLE IF NOT EXISTS orders (
     CHECK (status IN ('new','confirmed','shipped','delivered','cancelled')),
   created_at TEXT NOT NULL,
   request_id TEXT,
-  fulfilment TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfilment IN ('delivery','pickup'))
+  fulfilment TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfilment IN ('delivery','pickup')),
+  preferred_date TEXT
 );
 CREATE TABLE IF NOT EXISTS order_items (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -135,6 +136,7 @@ function migrate(db: DatabaseSync) {
   if (!orderColumns.includes("request_id")) db.exec("ALTER TABLE orders ADD COLUMN request_id TEXT");
   if (!orderColumns.includes("fulfilment"))
     db.exec("ALTER TABLE orders ADD COLUMN fulfilment TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfilment IN ('delivery','pickup'))");
+  if (!orderColumns.includes("preferred_date")) db.exec("ALTER TABLE orders ADD COLUMN preferred_date TEXT");
   const variantColumns = db.prepare("PRAGMA table_info(variants)").all().map((c) => c.name);
   if (!variantColumns.includes("price")) db.exec("ALTER TABLE variants ADD COLUMN price INTEGER CHECK (price IS NULL OR price >= 0)");
   // The first costing release stored lines in recipe_items; recipe_lines replaced it.

@@ -140,3 +140,19 @@ test("an option with its own price is charged at that price", () => {
   expect(getDb().prepare("SELECT price_snapshot, qty FROM order_items ORDER BY id").all()).toEqual([{ price_snapshot: 12345, qty: 2 }, { price_snapshot: 50000, qty: 1 }]);
   expect((getDb().prepare("SELECT subtotal s FROM orders").get() as { s: number }).s).toBe(12345 * 2 + 50000);
 });
+
+test("a preferred date is required and must be at least 2 days out and within 60 days", () => {
+  // NOW is 2026-10-04 11:00 Manila, so the earliest allowed date is 2026-10-06.
+  expect(placeOrder(order({ preferredDate: "" }), NOW)).toMatchObject({ ok: false, field: "preferredDate" });
+  expect(placeOrder(order({ preferredDate: "2026-10-05" }), NOW)).toMatchObject({ ok: false, field: "preferredDate" });
+  expect(placeOrder(order({ preferredDate: "2026-12-10" }), NOW)).toMatchObject({ ok: false, field: "preferredDate" });
+  expect(placeOrder(order({ preferredDate: "next tuesday" }), NOW)).toMatchObject({ ok: false, field: "preferredDate" });
+  expect(orderCount()).toBe(0);
+  expect(placeOrder(order({ preferredDate: "2026-10-06" }), NOW)).toEqual({ ok: true, code: "JC-2610-0001" });
+  expect((getDb().prepare("SELECT preferred_date d FROM orders").get() as { d: string }).d).toBe("2026-10-06");
+});
+
+test("pickup orders carry a preferred date too", () => {
+  expect(placeOrder(order({ fulfilment: "pickup", preferredDate: "2026-10-08" }), NOW)).toMatchObject({ ok: true });
+  expect(placeOrder(order({ fulfilment: "pickup", preferredDate: "" }), NOW)).toMatchObject({ ok: false, field: "preferredDate" });
+});

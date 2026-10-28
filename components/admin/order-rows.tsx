@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { formatPeso } from "@/lib/money";
 import type { OrderSummary } from "@/lib/orders";
-import { formatManila } from "@/lib/time";
+import { formatDateOnly, formatManila } from "@/lib/time";
 import { StatusBadge } from "./status-badge";
 
 const COLS = "md:grid md:grid-cols-[9rem_11rem_1fr_7rem_5rem_7rem] md:items-center md:gap-4";
@@ -26,7 +26,10 @@ export function OrderRows({ orders }: { orders: OrderSummary[] }) {
                 <span className="font-semibold tabular-nums">{o.code}</span>
                 <span className="md:order-last"><StatusBadge status={o.status} /></span>
               </span>
-              <span className="mt-1 block text-sm text-muted-foreground md:mt-0">{formatManila(o.createdAt)}</span>
+              <span className="mt-1 block text-sm text-muted-foreground md:mt-0">
+                {formatManila(o.createdAt)}
+                {o.preferredDate ? <span className="block text-foreground">Wanted {formatDateOnly(o.preferredDate)}</span> : null}
+              </span>
               <span className="mt-1 flex items-baseline justify-between gap-3 md:contents">
                 <span className="truncate">
                   {o.customerName}

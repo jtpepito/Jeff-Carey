@@ -12,11 +12,15 @@ import { cn } from "@/lib/utils";
 import { useCart } from "./cart-provider";
 import { EmptyState } from "./empty-state";
 
-type Props = { provinces: string[]; groups: Record<string, RegionGroup>; settings: Settings };
+type Props = {
+  provinces: string[]; groups: Record<string, RegionGroup>; settings: Settings;
+  /** Allowed preferred-date window, as YYYY-MM-DD in Manila time. */
+  dates: { min: string; max: string; leadDays: number };
+};
 type Payment = "cod" | "gcash";
 type Fulfilment = "delivery" | "pickup";
 
-export function CheckoutForm({ provinces, groups, settings }: Props) {
+export function CheckoutForm({ provinces, groups, settings, dates }: Props) {
   const router = useRouter();
   const { lines, ready, notices, refresh } = useCart();
   // With a single delivery province there is nothing to choose, so it starts selected.
@@ -82,7 +86,7 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
           requestId,
           fulfilment,
         customerName: text("customerName"), mobile: text("mobile"), province, city, address: text("address"),
-        notes: text("notes"), paymentMethod: payment, gcashRef: payment === "gcash" ? text("gcashRef") : undefined,
+        notes: text("notes"), preferredDate: text("preferredDate"), paymentMethod: payment, gcashRef: payment === "gcash" ? text("gcashRef") : undefined,
         lines: lines.map((l) => ({ variantId: l.variantId, qty: l.qty })),
         });
       } catch {
@@ -126,6 +130,12 @@ export function CheckoutForm({ provinces, groups, settings }: Props) {
             <RadioCard name="fulfilment" id="ful-pickup" label="Pickup" hint="Collect it from us. No delivery fee." checked={pickup} onSelect={() => setFulfilment("pickup")} />
           </div>
           {errorFor("fulfilment")}
+          <div className="mt-4 sm:max-w-xs">
+            <label htmlFor="f-preferredDate" className="field-label">{pickup ? "Preferred pickup date" : "Preferred delivery date"}</label>
+            <input id="f-preferredDate" name="preferredDate" type="date" className="field" min={dates.min} max={dates.max} defaultValue="" />
+            <p className="mt-1 text-sm text-muted-foreground">We bake to order, so the earliest is {dates.leadDays} days from today.</p>
+            {errorFor("preferredDate")}
+          </div>
         </fieldset>
 
         {pickup ? (

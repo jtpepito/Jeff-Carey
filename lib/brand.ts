@@ -1,5 +1,3 @@
-const img = (id: string, w = 900) => `https://images.unsplash.com/photo-${id}?auto=format&fit=crop&w=${w}&q=70`;
-
 /** Everything brand-specific lives here. Re-skin the starter by editing this file. */
 export const brand = {
   name: "Jef&Carey",
@@ -10,13 +8,15 @@ export const brand = {
   heroHeadline: "The oven goes on when your order comes in.",
   tagline: "Cinnamon rolls and cupcakes, baked in Cebu only after you order.",
   promise: "Real butter. Dough proofed overnight and frozen at its peak. Nothing is baked until you order, so your rolls arrive soft in the middle, with the bake date on the box.",
-  storyHeadline: "It started with a school bake sale.",
+  storyHeadline: "Every cinnamon roll tells a story that began at home.",
   story: [
-    "Jef&Carey started with a tray of cinnamon rolls for our son's school activity. The tray came home empty, the requests started coming in, and we have been baking to order ever since.",
-    "We still make the dough the same way, with real butter and an overnight proof, in batches small enough to get right. Each batch is frozen at its peak, and nothing goes into the oven until an order comes in: soft centre, caramelised edges, frosting spread while the rolls are still warm.",
-    "Every box carries its bake date. That date is the day we baked for you, and no one else.",
+    "What started as a family's love for warm, freshly baked cinnamon rolls soon became a tradition. There was something special about gathering around the table, sharing soft, sweet rolls straight from the oven, and creating moments that brought everyone a little closer together. Those simple moments of comfort, joy, and togetherness inspired us to turn our passion into something we could share with others.",
+    "Driven by our love for baking and our desire to create memorable treats, Jef & Carey was born. We carefully craft each batch using quality ingredients, traditional techniques, and a whole lot of heart. From the rich cinnamon filling to the perfectly soft dough, every roll is made with the same care and attention that we would give to our own family's table.",
+    "More than just a bakery, we believe that good food creates meaningful connections. Whether you're enjoying a quiet morning coffee, celebrating a special occasion, sending a thoughtful gift, or sharing a box with loved ones, we hope our bakes become part of your own cherished moments.",
+    "Today, we're proud to share our family's favorite treats with our community, one freshly baked cinnamon roll at a time.",
+    "From our family to yours, thank you for being part of the Jef & Carey story.",
   ],
-  storyImageAlt: "Freshly baked bread and pastries on bakery shelves",
+  storyImageAlt: "A tray of Biscoff cinnamon rolls fresh from the oven",
   shippingCopy: [
     "We deliver within Cebu province only, so everything arrives fresh.",
     "Your order goes into the oven after it comes in and leaves our kitchen within 2 business days. Cebu City, Mandaue, Lapu-Lapu and Talisay usually get it the same day it leaves us; towns further out, the next day.",
@@ -32,14 +32,10 @@ export const brand = {
     { q: "Do you accept custom orders?", a: "Yes! We'd love to help create something special. Send us details of what you have in mind, and we'll let you know the available options and pricing." },
     { q: "Do you accept orders for corporate giveaways?", a: "Absolutely! We accept bulk orders for corporate giveaways, client appreciation gifts, team events, and special occasions. We can discuss packaging options, personalized messages, and order quantities to suit your needs. To ensure availability and allow adequate preparation time, we recommend placing corporate orders as early as possible." },
   ],
-  gallery: [
-    img("1509365465985-25d11c17e812", 600),
-    img("1551024601-bec78aea704b", 600),
-    img("1499636136210-6f4ee915583e", 600),
-    img("1533134242443-d4fd215305ad", 600),
-    img("1550617931-e17a7b70dce2", 600),
-    img("1606890737304-57a1ca8a5b62", 600),
-  ],
-  storyImage: img("1517433670267-08bbd4be890f", 1200),
+  /** Shown in the photo strip on the home page. */
+  gallery: ["/products/cover-1.jpg", "/products/original.jpg", "/products/chocolate.jpg", "/products/biscoff.jpg", "/products/cover-2.jpg"],
+  storyImage: "/products/cover-2.jpg",
+  /** Photo for a category tile on the home page; a category without one uses its first product's photo. */
+  categoryCovers: { "Cinnamon Rolls": "/products/cover-1.jpg" } as Record<string, string>,
   social: "@jefandcarey",
 };

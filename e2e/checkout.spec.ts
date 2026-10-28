@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { signIn } from "./admin";
+import { earliestDate, signIn } from "./admin";
 
 async function addAndCheckout(page: Page, slug: string, extraQty = 0) {
   await page.goto(`/product/${slug}`);
@@ -15,6 +15,7 @@ async function fillContact(page: Page, province = "Cebu", city = "Cebu City") {
   await page.getByLabel("Province").selectOption(province);
   await page.getByLabel("City / Municipality").selectOption(city);
   await page.getByLabel("Street address").fill("12 Mabini St");
+  await page.getByLabel(/Preferred (delivery|pickup) date/).fill(earliestDate(3));
 }
 
 test("COD order: no reference field, correct totals, thank-you page", async ({ page }) => {
@@ -27,6 +28,7 @@ test("COD order: no reference field, correct totals, thank-you page", async ({ p
   await page.getByRole("button", { name: "Place order" }).click();
   await expect(page).toHaveURL(/\/thank-you\/JC-\d{4}-\d{4}/);
   await expect(page.getByText(/pay the rider/i)).toBeVisible();
+  await expect(page.getByText("Preferred delivery date")).toBeVisible();
   await expect(page.getByText("Vanilla Cupcake — Single")).toBeVisible();
   // Order codes are guessable, so the receipt must not show who ordered or where it is going.
   await expect(page.locator("main")).not.toContainText("Mabini");
@@ -65,6 +67,10 @@ test("contact errors show beside the field", async ({ page }) => {
   await page.getByRole("button", { name: "Place order" }).click();
   await expect(page.getByText("Enter your name.")).toBeVisible();
   await fillContact(page);
+  await page.getByLabel("Preferred delivery date").fill(earliestDate(0));
+  await page.getByRole("button", { name: "Place order" }).click();
+  await expect(page.getByText(/at least 2 days/)).toBeVisible();
+  await page.getByLabel("Preferred delivery date").fill(earliestDate(3));
   await page.getByLabel("Mobile number").fill("12345");
   await page.getByRole("button", { name: "Place order" }).click();
   await expect(page.getByText("Enter an 11-digit mobile number starting with 09.")).toBeVisible();
@@ -103,6 +109,7 @@ test("pickup: no address, no delivery fee, and the admin sees it as a pickup ord
   await page.getByLabel("Mobile number").fill("09175556666");
   await expect(page.getByTestId("summary")).toContainText("₱260"); // delivery is the default: 100 + 160
   await page.getByLabel("Pickup", { exact: true }).check();
+  await page.getByLabel("Preferred pickup date").fill(earliestDate(2));
   await expect(page.getByLabel("Street address")).toHaveCount(0);
   await expect(page.getByLabel("Province")).toHaveCount(0);
   await expect(page.getByText("We'll text you the pickup address and time")).toBeVisible();

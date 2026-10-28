@@ -6,7 +6,7 @@ import { OrderStatusButtons } from "@/components/admin/order-status-buttons";
 import { StatusBadge } from "@/components/admin/status-badge";
 import { formatPeso } from "@/lib/money";
 import { getOrder, nextStatuses } from "@/lib/orders";
-import { formatManila } from "@/lib/time";
+import { formatDateOnly, formatManila } from "@/lib/time";
 
 export const metadata: Metadata = { title: "Order" };
 
@@ -25,6 +25,11 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
         <StatusBadge status={order.status} data-testid="status" />
       </div>
       <p className="mt-1 text-sm text-muted-foreground">Placed {formatManila(order.createdAt)}</p>
+      {order.preferredDate ? (
+        <p className="mt-2 inline-block rounded-full bg-gold/25 px-3 py-1 text-sm font-semibold text-[#5f4a0c]">
+          Wanted by {formatDateOnly(order.preferredDate)} ({pickup ? "pickup" : "delivery"})
+        </p>
+      ) : null}
 
       <div className="mt-6 grid gap-6 md:grid-cols-[1.3fr_1fr] md:items-start">
         <div className="space-y-6">

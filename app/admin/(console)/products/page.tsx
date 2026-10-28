@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { AdminEmpty } from "@/components/admin/admin-empty";
+import { canOptimise } from "@/components/store/product-image";
 import { formatPeso } from "@/lib/money";
 import { priceRange } from "@/lib/pricing";
 import { listProducts } from "@/lib/products";
@@ -31,7 +32,7 @@ export default function ProductsPage() {
                   <Link href={`/admin/products/${p.id}`} className="flex items-center gap-4 px-4 py-3 hover:bg-muted/60">
                     <span className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-muted">
                       {p.images[0] ? (
-                        <Image src={p.images[0]} alt="" fill sizes="56px" className="object-cover" unoptimized={!p.images[0].startsWith("https://images.unsplash.com/")} />
+                        <Image src={p.images[0]} alt="" fill sizes="56px" className="object-cover" unoptimized={!canOptimise(p.images[0])} />
                       ) : null}
                     </span>
                     <span className="min-w-0 flex-1">

@@ -31,8 +31,8 @@ export function toProductInput(v: ProductFormValues): Parsed {
   }
 
   const images = (v.images ?? "").split(/\r?\n/).map((s) => s.trim()).filter(Boolean);
-  if (images.some((url) => !url.startsWith("https://")))
-    return { ok: false, field: "images", error: "Each image must be a full link starting with https://" };
+  if (images.some((url) => !(url.startsWith("https://") || url.startsWith("/"))))
+    return { ok: false, field: "images", error: "Each image must be a full link starting with https://, or a file path under /products/." };
 
   const variants: ProductInput["variants"] = [];
   for (const row of Array.isArray(v.variants) ? v.variants : []) {

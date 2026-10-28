@@ -119,3 +119,9 @@ test("cancelling a pickup order restocks it too", () => {
   expect(changeStatus(id, "cancelled")).toEqual({ ok: true });
   expect(stock(ids.v250)).toBe(5);
 });
+
+test("the preferred date is on the order for staff to see", () => {
+  const id = place({ preferredDate: "2026-10-09" });
+  expect(getOrder(id)!.preferredDate).toBe("2026-10-09");
+  expect(listOrders()[0].preferredDate).toBe("2026-10-09");
+});

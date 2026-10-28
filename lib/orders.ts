@@ -4,7 +4,7 @@ import { nextOrderCode } from "./order-code";
 import { isValidLocation, regionGroupOf } from "./ph-locations";
 import { getSettings } from "./settings";
 import { shippingFee } from "./shipping";
-import { manilaDayRange } from "./time";
+import { manilaDate, manilaDayRange } from "./time";
 
 export type Fulfilment = "delivery" | "pickup";
 
@@ -14,9 +14,15 @@ export type OrderInput = {
   lines: { variantId: number; qty: number }[];
   /** Defaults to delivery. Pickup needs no address and has no delivery fee. */
   fulfilment?: Fulfilment;
+  /** YYYY-MM-DD, the day the customer wants it delivered or will pick it up. */
+  preferredDate?: string;
   /** Made up once by the checkout page. A retry with the same id returns the first order. */
   requestId?: string;
 };
+/** Orders are baked to order, so the earliest date is this many days out; and no further than the max. */
+export const MIN_LEAD_DAYS = 2;
+export const MAX_LEAD_DAYS = 60;
+
 export type PlaceResult = { ok: true; code: string } | { ok: false; error: string; field: string };
 
 const MAX_QTY_PER_LINE = 99;
@@ -49,6 +55,13 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
   if (input.paymentMethod !== "cod" && input.paymentMethod !== "gcash")
     return fail("paymentMethod", "Choose a payment method.");
   if (input.paymentMethod === "gcash" && !gcashRef) return fail("gcashRef", "Enter your GCash reference number.");
+  const preferredDate = (input.preferredDate ?? "").trim();
+  const earliest = manilaDate(now, MIN_LEAD_DAYS);
+  const latest = manilaDate(now, MAX_LEAD_DAYS);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(preferredDate) || Number.isNaN(Date.parse(preferredDate + "T12:00:00+08:00")))
+    return fail("preferredDate", `Choose the day you want it ${pickup ? "picked up" : "delivered"}.`);
+  if (preferredDate < earliest) return fail("preferredDate", `We bake to order, so please choose a date at least ${MIN_LEAD_DAYS} days from today.`);
+  if (preferredDate > latest) return fail("preferredDate", `Please choose a date within the next ${MAX_LEAD_DAYS} days.`);
 
   const merged = new Map<number, number>();
   for (const l of Array.isArray(input.lines) ? input.lines : []) {
@@ -91,13 +104,13 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
       const orderId = db
         .prepare(
           `INSERT INTO orders (code, customer_name, mobile, province, city, address, notes, payment_method,
-             gcash_ref, shipping_fee, subtotal, total, status, created_at, request_id, fulfilment)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?)`,
+             gcash_ref, shipping_fee, subtotal, total, status, created_at, request_id, fulfilment, preferred_date)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?, ?)`,
         )
         .run(
           code, customerName, mobile, pickup ? "" : input.province, pickup ? "" : input.city, address, input.notes?.trim() ?? "",
           input.paymentMethod, input.paymentMethod === "gcash" ? gcashRef : null,
-          fee, subtotal, subtotal + fee, now.toISOString(), requestId, fulfilment,
+          fee, subtotal, subtotal + fee, now.toISOString(), requestId, fulfilment, preferredDate,
         ).lastInsertRowid;
 
       const addItem = db.prepare(
@@ -117,7 +130,7 @@ export type OrderItem = { id: number; productId: number; variantId: number; name
 export type Order = {
   id: number; code: string; customerName: string; mobile: string; province: string; city: string;
   address: string; notes: string; adminNotes: string; paymentMethod: "cod" | "gcash"; gcashRef: string | null;
-  shippingFee: number; subtotal: number; total: number; status: OrderStatus; createdAt: string; fulfilment: Fulfilment; items: OrderItem[];
+  shippingFee: number; subtotal: number; total: number; status: OrderStatus; createdAt: string; fulfilment: Fulfilment; preferredDate: string | null; items: OrderItem[];
 };
 export type OrderSummary = Omit<Order, "items">;
 
@@ -137,7 +150,7 @@ export function nextStatuses(s: OrderStatus): OrderStatus[] {
 
 const ORDER_COLUMNS = `id, code, customer_name AS customerName, mobile, province, city, address, notes,
   admin_notes AS adminNotes, payment_method AS paymentMethod, gcash_ref AS gcashRef,
-  shipping_fee AS shippingFee, subtotal, total, status, created_at AS createdAt, fulfilment`;
+  shipping_fee AS shippingFee, subtotal, total, status, created_at AS createdAt, fulfilment, preferred_date AS preferredDate`;
 
 function withItems(row: OrderSummary | undefined): Order | null {
   if (!row) return null;

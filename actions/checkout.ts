@@ -16,6 +16,7 @@ export async function submitOrder(input: OrderInput): Promise<PlaceResult> {
     gcashRef: String(input.gcashRef ?? "").slice(0, 60),
     lines: Array.isArray(input.lines) ? input.lines : [],
     fulfilment: input.fulfilment,
+    preferredDate: String(input.preferredDate ?? "").slice(0, 10),
     requestId: typeof input.requestId === "string" ? input.requestId.slice(0, 80) : undefined,
   });
 }
