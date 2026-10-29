@@ -136,6 +136,34 @@ export function applySeedPhotos(): number {
   return changed;
 }
 
+/**
+ * For each roll that has the owner's own photos in public/products, swaps them in if the product still shows
+ * only stock (Unsplash) photos. Photos someone set in admin are left alone. Runs at server start, so a deploy
+ * is enough to bring new photos to the live shop. Returns how many products changed.
+ */
+export function replaceStandInPhotos(): number {
+  const read = getDb().prepare("SELECT images FROM products WHERE slug = ?");
+  const update = getDb().prepare("UPDATE products SET images = ? WHERE slug = ?");
+  let changed = 0;
+  for (const p of PRODUCTS) {
+    if (!p.photos.every((ph) => ph.startsWith("/"))) continue; // no photos of our own for this one yet
+    const row = read.get(p.slug) as { images: string } | undefined;
+    if (!row) continue;
+    let current: unknown;
+    try {
+      current = JSON.parse(row.images);
+    } catch {
+      current = [];
+    }
+    const list = Array.isArray(current) ? current.filter((u): u is string => typeof u === "string") : [];
+    const onlyStock = list.every((u) => u.includes("images.unsplash.com"));
+    if (!onlyStock) continue;
+    update.run(JSON.stringify(p.photos), p.slug);
+    changed++;
+  }
+  return changed;
+}
+
 /** Loads the starter data only when the shop has no products at all. */
 export function seedIfEmpty(): { ok: true } | { ok: false; error: string } {
   const count = (getDb().prepare("SELECT COUNT(*) AS c FROM products").get() as { c: number }).c;
