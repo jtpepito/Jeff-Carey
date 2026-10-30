@@ -43,7 +43,7 @@ const PRODUCTS: SeedProduct[] = [
     slug: "biscoff-cinnamon-rolls", name: "Biscoff Cinnamon Rolls", category: "Cinnamon Rolls", featured: false,
     description: "The original roll finished with cream cheese frosting and a layer of Biscoff on top.",
     howToUse: "Best warm. 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature.",
-    photos: ["/products/biscoff.jpg", "/products/cover-2.jpg"], variants: ROLL_VARIANTS,
+    photos: ["/products/biscoff-2.jpg", "/products/cover-2.jpg"], variants: ROLL_VARIANTS,
     recipe: { yield: 42, labour: 0, packaging: 40, notes: ROLL_NOTES, items: [["Cinnamon roll dough", 42], ["OG filling", 42], ["Cream cheese topping", 42], ["Biscoff spread", 210]] },
   },
   {
@@ -170,6 +170,7 @@ export function replaceStandInPhotos(): number {
  */
 const RENAMED_PHOTOS: Record<string, string> = {
   "/products/chocolate.jpg": "/products/chocolate-2.jpg",
+  "/products/biscoff.jpg": "/products/biscoff-2.jpg",
 };
 
 /** Points every product at the newest file for any renamed photo. Runs at server start. Returns how many changed. */

@@ -86,7 +86,7 @@ test("replaceStandInPhotos gives rolls still on stock photos the owner's photos,
 
   expect(replaceStandInPhotos()).toBe(2);
   expect(images("og-cinnamon-rolls")).toEqual(["/products/original.jpg", "/products/cover-1.jpg"]);
-  expect(images("biscoff-cinnamon-rolls")).toEqual(["/products/biscoff.jpg", "/products/cover-2.jpg"]);
+  expect(images("biscoff-cinnamon-rolls")).toEqual(["/products/biscoff-2.jpg", "/products/cover-2.jpg"]);
   expect(images("choco-cinnamon-rolls")).toEqual(["https://example.com/my-own-photo.jpg"]); // chosen in admin: kept
   expect(images("oreo-cinnamon-rolls")).toEqual(oreoBefore); // no photo of our own yet
   expect(replaceStandInPhotos()).toBe(0);
@@ -108,4 +108,16 @@ test("photos that were replaced by a newer file are renamed wherever they are us
 test("a fresh seed already uses the newest chocolate photo", () => {
   seed();
   expect(listProducts().find((p) => p.slug === "choco-cinnamon-rolls")!.images[0]).toBe("/products/chocolate-2.jpg");
+});
+
+test("the Biscoff roll moves from the old photo to the cleaner one", () => {
+  seed();
+  getDb().prepare("UPDATE products SET images = ? WHERE slug = ?").run(JSON.stringify(["/products/biscoff.jpg", "/products/cover-2.jpg"]), "biscoff-cinnamon-rolls");
+  expect(renameRetiredPhotos()).toBe(1);
+  expect(listProducts().find((p) => p.slug === "biscoff-cinnamon-rolls")!.images).toEqual(["/products/biscoff-2.jpg", "/products/cover-2.jpg"]);
+});
+
+test("a fresh seed already uses the newest Biscoff photo", () => {
+  seed();
+  expect(listProducts().find((p) => p.slug === "biscoff-cinnamon-rolls")!.images[0]).toBe("/products/biscoff-2.jpg");
 });
