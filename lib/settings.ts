@@ -9,9 +9,13 @@ export type Settings = {
   labourRate: number;
   /** Suggested price = cost before packaging × this, plus packaging. */
   targetMarkup: number;
+  /** Shown at checkout for bank transfers. */
+  bankName: string;
+  bankAccountNumber: string;
+  bankAccountName: string;
 };
 
-const TEXT_SETTINGS = new Set<keyof Settings>(["gcashNumber", "pickupInfo"]);
+const TEXT_SETTINGS = new Set<keyof Settings>(["gcashNumber", "pickupInfo", "bankName", "bankAccountNumber", "bankAccountName"]);
 
 const KEYS: Record<keyof Settings, string> = {
   freeShippingThreshold: "free_shipping_threshold", gcashNumber: "gcash_number",
@@ -19,6 +23,9 @@ const KEYS: Record<keyof Settings, string> = {
   pickupInfo: "pickup_info",
   labourRate: "labour_rate",
   targetMarkup: "target_markup",
+  bankName: "bank_name",
+  bankAccountNumber: "bank_account_number",
+  bankAccountName: "bank_account_name",
 };
 
 const DEFAULTS: Settings = {
@@ -27,6 +34,9 @@ const DEFAULTS: Settings = {
   pickupInfo: "We'll text you the pickup address and time once your order is confirmed.",
   labourRate: 8000,
   targetMarkup: 5,
+  bankName: "China Banking Corporation",
+  bankAccountNumber: "129000009744",
+  bankAccountName: "Thebakehubbywythlae Space Rental",
 };
 
 export function getSettings(): Settings {

@@ -37,7 +37,7 @@ export function OrderRows({ orders }: { orders: OrderSummary[] }) {
                 </span>
                 <span className="font-semibold tabular-nums md:text-right">{formatPeso(o.total)}</span>
               </span>
-              <span className="text-sm text-muted-foreground md:text-foreground">{o.paymentMethod === "cod" ? "COD" : "GCash"}</span>
+              <span className="text-sm text-muted-foreground md:text-foreground">{o.paymentMethod === "bank" ? "Bank" : o.paymentMethod === "gcash" ? "GCash" : "Cash"}</span>
             </Link>
           </li>
         ))}

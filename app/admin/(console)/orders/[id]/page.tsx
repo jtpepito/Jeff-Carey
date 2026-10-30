@@ -7,6 +7,7 @@ import { StatusBadge } from "@/components/admin/status-badge";
 import { formatPeso } from "@/lib/money";
 import { getOrder, nextStatuses } from "@/lib/orders";
 import { formatDateOnly, formatManila } from "@/lib/time";
+import { paymentLabel } from "@/lib/payment";
 
 export const metadata: Metadata = { title: "Order" };
 
@@ -85,10 +86,23 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
 
           <section className="rounded-2xl border border-border bg-card p-5" aria-labelledby="payment">
             <h2 id="payment" className="text-xl">Payment</h2>
-            <p className="mt-2 font-medium">{order.paymentMethod === "gcash" ? "GCash" : pickup ? "Cash on pickup" : "Cash on delivery"}</p>
-            {order.paymentMethod === "gcash" ? (
-              <p className="text-[15px]">GCash ref: {order.gcashRef}</p>
-            ) : (
+            <p className="mt-2 font-medium">{paymentLabel(order.paymentMethod, pickup)}</p>
+            {order.gcashRef ? <p className="text-[15px]">Reference: {order.gcashRef}</p> : null}
+            {order.proof ? (
+              <div className="mt-3">
+                <a href={`/admin/orders/${order.id}/proof`} target="_blank" rel="noopener" className="font-medium text-primary underline underline-offset-4">
+                  View proof of payment
+                </a>
+                <span className="ml-2 text-sm text-muted-foreground">({Math.max(1, Math.round(order.proof.size / 1024))} KB)</span>
+                {order.proof.mime === "image/jpeg" || order.proof.mime === "image/png" || order.proof.mime === "image/webp" ? (
+                  // eslint-disable-next-line @next/next/no-img-element -- private admin-only file, not for the image optimiser
+                  <img src={`/admin/orders/${order.id}/proof`} alt="Customer's proof of payment" className="mt-3 max-h-96 w-auto rounded-xl border border-border" />
+                ) : null}
+              </div>
+            ) : order.paymentMethod !== "cod" ? (
+              <p className="mt-2 text-sm text-destructive">No receipt was attached.</p>
+            ) : null}
+            {order.paymentMethod !== "cod" ? null : (
               <p className="text-[15px] text-muted-foreground">Collect {formatPeso(order.total)} {pickup ? "at pickup" : "on delivery"}.</p>
             )}
           </section>

@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { earliestDate, signIn } from "./admin";
+import { earliestDate, RECEIPT, signIn } from "./admin";
 
 test("a storefront order appears as new with correct totals, then cancel restores stock", async ({ page }) => {
   await page.goto("/product/vanilla-cupcake"); // Single ₱100
@@ -9,7 +9,8 @@ test("a storefront order appears as new with correct totals, then cancel restore
   await page.getByLabel("Mobile number").fill("09181112222");
   await page.getByLabel("Preferred pickup date").fill(earliestDate(4));
   await page.getByLabel("GCash", { exact: true }).check();
-  await page.getByLabel("GCash reference number").fill("9988776655443");
+  await page.getByLabel("Proof of payment").setInputFiles(RECEIPT);
+  await page.getByLabel(/Reference number/).fill("9988776655443");
   await page.getByRole("button", { name: "Place order" }).click();
   await page.waitForURL(/\/thank-you\//);
   const code = page.url().split("/").pop()!;
@@ -26,7 +27,8 @@ test("a storefront order appears as new with correct totals, then cancel restore
   await expect(row).toContainText("Carlo Dizon");
   await expect(row).toContainText("₱100"); // pickup: no fee
   await row.click();
-  await expect(page.getByText("GCash ref: 9988776655443")).toBeVisible();
+  await expect(page.getByText("Reference: 9988776655443")).toBeVisible();
+  await expect(page.getByRole("link", { name: "View proof of payment" })).toBeVisible();
   await expect(page.getByText("Vanilla Cupcake — Single")).toBeVisible();
   await expect(page.getByText("Wanted by")).toBeVisible();
 

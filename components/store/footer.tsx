@@ -33,7 +33,7 @@ export function Footer() {
       </div>
       <div className="border-t border-white/15">
         <div className="container-page flex flex-col gap-1 py-5 text-sm text-[#bfb09a] sm:flex-row sm:justify-between">
-          <p>© {new Date().getFullYear()} {brand.name}. {brand.pickupOnly ? "Cash on pick-up and GCash accepted." : "Cash on delivery and GCash accepted."}</p>
+          <p>© {new Date().getFullYear()} {brand.name}. Bank transfer and GCash accepted.</p>
           <p>{brand.social}</p>
         </div>
       </div>

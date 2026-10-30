@@ -22,11 +22,11 @@ export const brand = {
   shippingCopy: [
     "All orders are for pick-up. Choose the day you want to collect at checkout, at least 2 days ahead, and we bake for that day.",
     "Once your order is confirmed we'll message you the pick-up location and your time window. Please arrive within it so your bakes are at their freshest.",
-    "Pay in cash when you pick up, or send the total by GCash and enter the reference at checkout.",
+    "Pay by bank transfer or GCash at checkout and attach your receipt. We verify it before we bake.",
   ],
   faqs: [
     { q: "How do I get my order?", a: "All orders are for pick-up. Once your order is confirmed, we'll provide the pick-up location, date, and time. Please arrive within your scheduled window to ensure your bakes are at their freshest." },
-    { q: "How does GCash payment work?", a: "Once your order is confirmed, we'll send you our GCash payment details. Simply send your payment, take a screenshot of the transaction, and message it to us as proof of payment. Your order will be processed once payment has been verified." },
+    { q: "How do I pay?", a: "Pay by bank transfer to our China Bank account or by GCash. The account details and your total are shown at checkout. Simply send your payment, take a screenshot or photo of the receipt, and attach it before you place your order. Your order will be processed once payment has been verified." },
     { q: "How long do your bakes stay fresh?", a: "Our bakes are made fresh to order. For the best taste and texture, we recommend enjoying them within 2-3 days of receiving your order. To extend freshness, store them in an airtight container and follow any storage instructions provided with your order." },
     { q: "What if something arrives damaged?", a: "We take great care in packaging every order. If something is damaged, please send us clear photos within 24 hours of picking it up. We'll review the issue and work with you to find the best solution, whether that's a replacement, store credit, or another appropriate resolution." },
     { q: "How far in advance should I place my order?", a: "We recommend placing your order at least 2-3 days in advance to secure your preferred date. For large orders, special occasions, or custom requests, earlier booking is encouraged. You may send a message to Wryffens at 0917 677 8897 to discuss your requirements." },

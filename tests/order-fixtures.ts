@@ -3,6 +3,10 @@ import type { OrderInput } from "@/lib/orders";
 import { createProduct, getProductById, type ProductInput } from "@/lib/products";
 import { freshDb } from "./helpers";
 
+/** A real 1x1 PNG, standing in for a customer's receipt screenshot. */
+export const RECEIPT_PNG = Uint8Array.from(Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64"));
+export const receipt = () => ({ name: "receipt.png", data: RECEIPT_PNG });
+
 export const NOW = new Date("2026-10-04T03:00:00Z");
 
 export const product: ProductInput = {
@@ -23,7 +27,7 @@ export function setupShop() {
 export function order(over: Partial<OrderInput> = {}): OrderInput {
   return {
     customerName: "Ana Reyes", mobile: "09171234567", province: "Cebu", city: "Cebu City",
-    address: "12 Mabini St", paymentMethod: "cod", preferredDate: "2026-10-07", lines: [{ variantId: ids.v250, qty: 1 }], ...over,
+    address: "12 Mabini St", paymentMethod: "bank", proof: receipt(), preferredDate: "2026-10-07", lines: [{ variantId: ids.v250, qty: 1 }], ...over,
   };
 }
 

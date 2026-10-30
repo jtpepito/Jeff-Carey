@@ -1,6 +1,7 @@
 import { getDb, tx } from "./db";
 import { deliversTo, deliveryProvinces } from "./delivery";
 import { pickupOnly } from "./fulfilment";
+import { detectProofType, MAX_PROOF_BYTES, type CheckoutPayment, type PaymentMethod } from "./payment";
 import { nextOrderCode } from "./order-code";
 import { isValidLocation, regionGroupOf } from "./ph-locations";
 import { getSettings } from "./settings";
@@ -11,7 +12,11 @@ export type Fulfilment = "delivery" | "pickup";
 
 export type OrderInput = {
   customerName: string; mobile: string; province: string; city: string; address: string;
-  notes?: string; paymentMethod: "cod" | "gcash"; gcashRef?: string;
+  notes?: string; paymentMethod: CheckoutPayment;
+  /** Optional reference number from the bank or GCash receipt. */
+  gcashRef?: string;
+  /** The receipt the customer uploads: a photo or PDF of the transfer. */
+  proof?: { name: string; data: Uint8Array };
   lines: { variantId: number; qty: number }[];
   /** Defaults to delivery. Pickup needs no address and has no delivery fee. */
   fulfilment?: Fulfilment;
@@ -54,9 +59,14 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
     if (!isValidLocation(input.province, input.city)) return fail("city", "Choose a city or municipality.");
     if (!address) return fail("address", "Enter your street address.");
   }
-  if (input.paymentMethod !== "cod" && input.paymentMethod !== "gcash")
-    return fail("paymentMethod", "Choose a payment method.");
-  if (input.paymentMethod === "gcash" && !gcashRef) return fail("gcashRef", "Enter your GCash reference number.");
+  if (input.paymentMethod !== "bank" && input.paymentMethod !== "gcash")
+    return fail("paymentMethod", "Choose bank transfer or GCash.");
+  const proofData = input.proof?.data;
+  if (!proofData || proofData.length === 0) return fail("proof", "Attach a screenshot or photo of your payment so we can verify it.");
+  if (proofData.length > MAX_PROOF_BYTES) return fail("proof", "That file is over 5 MB. Please attach a smaller screenshot or photo.");
+  const proofMime = detectProofType(proofData);
+  if (!proofMime) return fail("proof", "Please attach a photo (JPG, PNG, WebP or HEIC) or a PDF of your receipt.");
+  const proofName = (input.proof?.name ?? "").trim().slice(0, 120) || "receipt";
   const preferredDate = (input.preferredDate ?? "").trim();
   const earliest = manilaDate(now, MIN_LEAD_DAYS);
   const latest = manilaDate(now, MAX_LEAD_DAYS);
@@ -111,7 +121,7 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
         )
         .run(
           code, customerName, mobile, pickup ? "" : input.province, pickup ? "" : input.city, address, input.notes?.trim() ?? "",
-          input.paymentMethod, input.paymentMethod === "gcash" ? gcashRef : null,
+          input.paymentMethod, gcashRef || null,
           fee, subtotal, subtotal + fee, now.toISOString(), requestId, fulfilment, preferredDate,
         ).lastInsertRowid;
 
@@ -119,6 +129,8 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
         "INSERT INTO order_items (order_id, product_id, variant_id, name_snapshot, price_snapshot, qty) VALUES (?, ?, ?, ?, ?, ?)",
       );
       for (const i of items) addItem.run(orderId, i.pid, i.vid, i.name, i.price, i.qty);
+      db.prepare("INSERT INTO payment_proofs (order_id, file_name, mime, size, data, created_at) VALUES (?, ?, ?, ?, ?, ?)")
+        .run(orderId, proofName, proofMime, proofData.length, proofData, now.toISOString());
       return { ok: true as const, code };
     });
   } catch (e) {
@@ -131,8 +143,10 @@ export type OrderStatus = "new" | "confirmed" | "shipped" | "delivered" | "cance
 export type OrderItem = { id: number; productId: number; variantId: number; name: string; price: number; qty: number };
 export type Order = {
   id: number; code: string; customerName: string; mobile: string; province: string; city: string;
-  address: string; notes: string; adminNotes: string; paymentMethod: "cod" | "gcash"; gcashRef: string | null;
+  address: string; notes: string; adminNotes: string; paymentMethod: PaymentMethod; gcashRef: string | null;
   shippingFee: number; subtotal: number; total: number; status: OrderStatus; createdAt: string; fulfilment: Fulfilment; preferredDate: string | null; items: OrderItem[];
+  /** The customer's receipt, if one was uploaded (orders paid in cash before have none). */
+  proof: { fileName: string; mime: string; size: number } | null;
 };
 export type OrderSummary = Omit<Order, "items">;
 
@@ -162,7 +176,10 @@ function withItems(row: OrderSummary | undefined): Order | null {
               price_snapshot AS price, qty FROM order_items WHERE order_id = ? ORDER BY id`,
     )
     .all(row.id) as OrderItem[];
-  return { ...row, items };
+  const proof = getDb()
+    .prepare("SELECT file_name AS fileName, mime, size FROM payment_proofs WHERE order_id = ?")
+    .get(row.id) as { fileName: string; mime: string; size: number } | undefined;
+  return { ...row, items, proof: proof ? { ...proof } : null };
 }
 
 export function getOrder(id: number): Order | null {
@@ -211,4 +228,13 @@ export function dashboardStats(now: Date = new Date()) {
   const todayRevenue = todayOrders.filter((o) => o.status !== "cancelled").reduce((sum, o) => sum + o.total, 0);
   const pendingCount = (getDb().prepare("SELECT COUNT(*) AS c FROM orders WHERE status = 'new'").get() as { c: number }).c;
   return { todayOrders, todayRevenue, pendingCount };
+}
+
+/** The receipt file for an order, for the admin to view. */
+export function getPaymentProof(orderId: number): { fileName: string; mime: string; size: number; data: Uint8Array } | null {
+  if (!Number.isInteger(orderId)) return null;
+  const row = getDb()
+    .prepare("SELECT file_name AS fileName, mime, size, data FROM payment_proofs WHERE order_id = ?")
+    .get(orderId) as { fileName: string; mime: string; size: number; data: Uint8Array } | undefined;
+  return row ? { ...row } : null;
 }

@@ -9,6 +9,8 @@ import type { RegionGroup } from "@/lib/ph-locations";
 import type { Settings } from "@/lib/settings";
 import { shippingFee } from "@/lib/shipping";
 import { cn } from "@/lib/utils";
+import { MAX_PROOF_BYTES, type CheckoutPayment } from "@/lib/payment";
+import { shrinkImage } from "@/lib/shrink-image";
 import { useCart } from "./cart-provider";
 import { EmptyState } from "./empty-state";
 
@@ -19,7 +21,7 @@ type Props = {
   /** No delivery choice, address or fee: every order is collected. */
   pickupOnly: boolean;
 };
-type Payment = "cod" | "gcash";
+type Payment = CheckoutPayment;
 type Fulfilment = "delivery" | "pickup";
 
 export function CheckoutForm({ provinces, groups, settings, dates, pickupOnly }: Props) {
@@ -29,7 +31,8 @@ export function CheckoutForm({ provinces, groups, settings, dates, pickupOnly }:
   const [province, setProvince] = useState(provinces.length === 1 ? provinces[0] : "");
   const [city, setCity] = useState("");
   const [cities, setCities] = useState<string[]>([]);
-  const [payment, setPayment] = useState<Payment>("cod");
+  const [payment, setPayment] = useState<Payment>("bank");
+  const [copied, setCopied] = useState(false);
   const [fulfilment, setFulfilment] = useState<Fulfilment>(pickupOnly ? "pickup" : "delivery");
   const [error, setError] = useState<{ field: string; message: string } | null>(null);
   const [placed, setPlaced] = useState(false);
@@ -81,16 +84,28 @@ export function CheckoutForm({ provinces, groups, settings, dates, pickupOnly }:
     setError(null);
     const form = new FormData(e.currentTarget);
     const text = (name: string) => String(form.get(name) ?? "");
+    const picked = form.get("proof");
     startTransition(async () => {
       let result: Awaited<ReturnType<typeof submitOrder>>;
       try {
-        result = await submitOrder({
+        const body = new FormData();
+        body.append("order", JSON.stringify({
           requestId,
           fulfilment,
-        customerName: text("customerName"), mobile: text("mobile"), province, city, address: text("address"),
-        notes: text("notes"), preferredDate: text("preferredDate"), paymentMethod: payment, gcashRef: payment === "gcash" ? text("gcashRef") : undefined,
-        lines: lines.map((l) => ({ variantId: l.variantId, qty: l.qty })),
-        });
+          customerName: text("customerName"), mobile: text("mobile"), province, city, address: text("address"),
+          notes: text("notes"), preferredDate: text("preferredDate"), paymentMethod: payment, gcashRef: text("paymentRef"),
+          lines: lines.map((l) => ({ variantId: l.variantId, qty: l.qty })),
+        }));
+        if (picked instanceof File && picked.size > 0) {
+          const receipt = await shrinkImage(picked);
+          if (receipt.size > MAX_PROOF_BYTES) {
+            submitting.current = false;
+            setError({ field: "proof", message: "That file is over 5 MB. Please attach a smaller screenshot or photo." });
+            return;
+          }
+          body.append("proof", receipt);
+        }
+        result = await submitOrder(body);
       } catch {
         submitting.current = false;
         setError({ field: "network", message: "We couldn't reach the shop. Check your connection and tap Place order again. Your order won't be placed twice." });
@@ -207,28 +222,50 @@ export function CheckoutForm({ provinces, groups, settings, dates, pickupOnly }:
         <fieldset>
           <legend className="font-heading text-2xl">Payment</legend>
           <div className="mt-4 space-y-3">
-            <RadioCard
-              name="paymentMethod"
-              id="pay-cod"
-              label={pickup ? "Cash on pickup" : "Cash on delivery"}
-              hint={pickup ? "Pay in cash when you collect your order." : "Pay the rider in cash when your order arrives."}
-              checked={payment === "cod"}
-              onSelect={() => setPayment("cod")}
-            />
-            <RadioCard name="paymentMethod" id="pay-gcash" label="GCash" hint="Send payment now, then enter the reference number." checked={payment === "gcash"} onSelect={() => setPayment("gcash")} />
+            <RadioCard name="paymentMethod" id="pay-bank" label="Bank transfer" hint={`Transfer to our ${settings.bankName} account, then attach the receipt.`} checked={payment === "bank"} onSelect={() => setPayment("bank")} />
+            <RadioCard name="paymentMethod" id="pay-gcash" label="GCash" hint="Send to our GCash number, then attach the screenshot." checked={payment === "gcash"} onSelect={() => setPayment("gcash")} />
           </div>
           {errorFor("paymentMethod")}
-          {payment === "gcash" ? (
-            <div className="mt-4 rounded-2xl bg-muted p-4">
+          <div className="mt-4 rounded-2xl bg-muted p-4">
+            {payment === "bank" ? (
+              <>
+                <p className="text-[15px]">Transfer <strong>{formatPeso(total)}</strong> to:</p>
+                <dl data-testid="bank-details" className="mt-2 space-y-1 text-[15px]">
+                  <div><dt className="inline text-muted-foreground">Bank: </dt><dd className="inline font-semibold">{settings.bankName}</dd></div>
+                  <div className="flex flex-wrap items-center gap-x-3">
+                    <span><dt className="inline text-muted-foreground">Account number: </dt><dd className="inline font-semibold tabular-nums">{settings.bankAccountNumber}</dd></span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void navigator.clipboard?.writeText(settings.bankAccountNumber.replace(/\s/g, "")).then(() => setCopied(true));
+                      }}
+                      className="min-h-9 text-sm font-medium underline underline-offset-4"
+                    >
+                      {copied ? "Copied" : "Copy number"}
+                    </button>
+                  </div>
+                  <div><dt className="inline text-muted-foreground">Account name: </dt><dd className="inline font-semibold">{settings.bankAccountName}</dd></div>
+                </dl>
+              </>
+            ) : (
               <p className="text-[15px]">
-                Send <strong>{formatPeso(total)}</strong> to <strong>{settings.gcashNumber}</strong>, then enter the reference number below.
+                Send <strong>{formatPeso(total)}</strong> to GCash <strong>{settings.gcashNumber}</strong>.
               </p>
-              {fee === null ? <p className="mt-1 text-sm text-muted-foreground">Choose your province first so the total includes delivery.</p> : null}
-              <label htmlFor="f-gcashRef" className="field-label mt-4">GCash reference number</label>
-              <input id="f-gcashRef" name="gcashRef" className="field" inputMode="numeric" maxLength={60} placeholder="13-digit number on your GCash receipt" />
-              {errorFor("gcashRef")}
-            </div>
-          ) : null}
+            )}
+            {fee === null ? <p className="mt-1 text-sm text-muted-foreground">Choose your province first so the total includes delivery.</p> : null}
+            <label htmlFor="f-proof" className="field-label mt-4">Proof of payment</label>
+            <input
+              id="f-proof"
+              name="proof"
+              type="file"
+              accept="image/*,application/pdf"
+              className="block w-full text-[15px] file:mr-3 file:h-11 file:rounded-full file:border-0 file:bg-primary file:px-4 file:font-semibold file:text-primary-foreground"
+            />
+            <p className="mt-1 text-sm text-muted-foreground">A screenshot or photo of your {payment === "bank" ? "transfer receipt" : "GCash receipt"}, or a PDF. Up to 5 MB.</p>
+            {errorFor("proof")}
+            <label htmlFor="f-paymentRef" className="field-label mt-4">Reference number <span className="font-normal text-muted-foreground">(optional)</span></label>
+            <input id="f-paymentRef" name="paymentRef" className="field" maxLength={60} placeholder="From your receipt, if it has one" />
+          </div>
         </fieldset>
       </div>
 
@@ -276,9 +313,7 @@ export function CheckoutForm({ provinces, groups, settings, dates, pickupOnly }:
             {pending ? "Placing order…" : "Place order"}
           </button>
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            {payment === "gcash"
-              ? "We'll verify your GCash payment before baking."
-              : `You'll pay ${formatPeso(total)} in cash ${pickup ? "when you pick up" : "on delivery"}.`}
+            We&apos;ll verify your payment before baking.
           </p>
         </div>
       </div>

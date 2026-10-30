@@ -122,6 +122,9 @@ const ORDERS: SeedOrder[] = [
   { daysAgo: 1, name: "Trisha Navarro", mobile: "09151230015", city: "Talisay City", address: "Blk 12 Lot 3, Lawaan 2", notes: "Call before delivery, please.", status: "new", items: [["biscoff-cinnamon-rolls", "Box of 4", 1], ["vanilla-cupcake", "Single", 2]] },
 ];
 
+/** A 1x1 PNG standing in for the customers' receipts on sample orders. */
+const SAMPLE_RECEIPT = Uint8Array.from(Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64"));
+
 const PATH: OrderStatus[] = ["confirmed", "shipped", "delivered"];
 const DAY_MS = 24 * 60 * 60 * 1000;
 
@@ -276,7 +279,7 @@ export function seed(now: Date = new Date()): void {
     const r = placeOrder(
       {
         customerName: o.name, mobile: o.mobile, province: "Cebu", city: o.city, address: o.address, preferredDate: manilaDate(placedAt, 3),
-        notes: o.notes, fulfilment: o.pickup || pickupOnly() ? "pickup" : "delivery", paymentMethod: o.gcashRef ? "gcash" : "cod", gcashRef: o.gcashRef,
+        notes: o.notes, fulfilment: o.pickup || pickupOnly() ? "pickup" : "delivery", paymentMethod: o.gcashRef ? "gcash" : "bank", gcashRef: o.gcashRef, proof: { name: "sample-receipt.png", data: SAMPLE_RECEIPT },
         lines: o.items.map(([slug, variant, qty]) => ({ variantId: variantId.get(`${slug}|${variant}`) ?? -1, qty })),
       },
       placedAt,

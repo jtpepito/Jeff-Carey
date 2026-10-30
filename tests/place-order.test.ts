@@ -2,7 +2,8 @@ import { beforeEach, expect, test } from "vitest";
 import { getDb } from "@/lib/db";
 import { placeOrder, type OrderInput } from "@/lib/orders";
 import { getProductById, updateProduct } from "@/lib/products";
-import { ids, NOW, order, orderCount, product, setupShop, stock } from "./order-fixtures";
+import { ids, NOW, order, orderCount, product, RECEIPT_PNG, receipt, setupShop, stock } from "./order-fixtures";
+import { getPaymentProof } from "@/lib/orders";
 
 beforeEach(setupShop);
 
@@ -73,12 +74,41 @@ test.each([
   expect(orderCount()).toBe(0);
 });
 
-test("GCash requires a reference and stores it trimmed; COD stores null", () => {
-  expect(placeOrder(order({ paymentMethod: "gcash" }), NOW)).toMatchObject({ ok: false, field: "gcashRef" });
-  expect(placeOrder(order({ paymentMethod: "gcash", gcashRef: "   " }), NOW)).toMatchObject({ ok: false, field: "gcashRef" });
+test("bank transfer and GCash both need a receipt; the reference number is optional and kept trimmed", () => {
+  expect(placeOrder(order({ paymentMethod: "bank", proof: undefined }), NOW)).toMatchObject({ ok: false, field: "proof" });
+  expect(placeOrder(order({ paymentMethod: "gcash", proof: undefined }), NOW)).toMatchObject({ ok: false, field: "proof" });
+  expect(placeOrder(order({ proof: { name: "empty.png", data: new Uint8Array() } }), NOW)).toMatchObject({ ok: false, field: "proof" });
+  expect(orderCount()).toBe(0);
   placeOrder(order({ paymentMethod: "gcash", gcashRef: " 1234567890123 " }), NOW);
-  placeOrder(order({ paymentMethod: "cod", gcashRef: "ignored" }), NOW);
-  expect(getDb().prepare("SELECT gcash_ref FROM orders ORDER BY id").all().map((r) => r.gcash_ref)).toEqual(["1234567890123", null]);
+  placeOrder(order({ paymentMethod: "bank" }), NOW);
+  expect(getDb().prepare("SELECT payment_method, gcash_ref FROM orders ORDER BY id").all()).toEqual([
+    { payment_method: "gcash", gcash_ref: "1234567890123" },
+    { payment_method: "bank", gcash_ref: null },
+  ]);
+});
+
+test("cash is no longer accepted for new orders", () => {
+  expect(placeOrder(order({ paymentMethod: "cod" as never }), NOW)).toMatchObject({ ok: false, field: "paymentMethod" });
+  expect(orderCount()).toBe(0);
+});
+
+test("a receipt must really be a photo or a PDF, and no larger than 5 MB", () => {
+  const html = Uint8Array.from(Buffer.from("<html><script>alert(1)</script></html>"));
+  expect(placeOrder(order({ proof: { name: "receipt.png", data: html } }), NOW)).toMatchObject({ ok: false, field: "proof" });
+  const huge = new Uint8Array(5 * 1024 * 1024 + 1);
+  huge.set(RECEIPT_PNG);
+  expect(placeOrder(order({ proof: { name: "huge.png", data: huge } }), NOW)).toMatchObject({ ok: false, field: "proof" });
+  expect(orderCount()).toBe(0);
+  expect(stock(ids.v250)).toBe(5);
+});
+
+test("the receipt is stored with the order, typed by its contents", () => {
+  const r = placeOrder(order({ proof: { name: "  my receipt.png ", data: RECEIPT_PNG } }), NOW) as { ok: true; code: string };
+  const id = (getDb().prepare("SELECT id FROM orders WHERE code = ?").get(r.code) as { id: number }).id;
+  const proof = getPaymentProof(id)!;
+  expect(proof).toMatchObject({ fileName: "my receipt.png", mime: "image/png", size: RECEIPT_PNG.length });
+  expect(Array.from(proof.data)).toEqual(Array.from(RECEIPT_PNG));
+  expect(getPaymentProof(999999)).toBeNull();
 });
 
 test("price comes from the database at purchase time and later edits do not rewrite the order", () => {
@@ -128,10 +158,11 @@ test("an unknown fulfilment value is rejected", () => {
   expect(orderCount()).toBe(0);
 });
 
-test("pickup still needs a name, a mobile number and, for GCash, a reference", () => {
+test("pickup still needs a name, a mobile number and a receipt", () => {
   expect(placeOrder(order({ fulfilment: "pickup", customerName: "" }), NOW)).toMatchObject({ ok: false, field: "customerName" });
   expect(placeOrder(order({ fulfilment: "pickup", mobile: "123" }), NOW)).toMatchObject({ ok: false, field: "mobile" });
-  expect(placeOrder(order({ fulfilment: "pickup", paymentMethod: "gcash" }), NOW)).toMatchObject({ ok: false, field: "gcashRef" });
+  expect(placeOrder(order({ fulfilment: "pickup", paymentMethod: "gcash", proof: undefined }), NOW)).toMatchObject({ ok: false, field: "proof" });
+  expect(placeOrder(order({ fulfilment: "pickup", proof: receipt() }), NOW)).toMatchObject({ ok: true });
 });
 
 test("an option with its own price is charged at that price", () => {

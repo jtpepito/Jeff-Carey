@@ -14,3 +14,10 @@ export async function signIn(page: Page) {
   await page.getByRole("button", { name: "Sign in" }).click();
   await page.waitForURL("**/admin");
 }
+
+/** A real 1x1 PNG, standing in for a customer's payment screenshot. */
+export const RECEIPT = {
+  name: "receipt.png",
+  mimeType: "image/png",
+  buffer: Buffer.from("iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==", "base64"),
+};

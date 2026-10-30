@@ -6,6 +6,7 @@ import { formatPeso } from "@/lib/money";
 import { getOrderByCode } from "@/lib/orders";
 import { getSettings } from "@/lib/settings";
 import { formatDateOnly } from "@/lib/time";
+import { paymentLabel } from "@/lib/payment";
 
 export const metadata: Metadata = { title: "Thank you", robots: { index: false } };
 
@@ -16,9 +17,14 @@ const NEXT_STEPS = {
     "Pay the rider in cash when it arrives. Having the exact amount ready helps.",
   ],
   gcash: [
-    "We verify your GCash reference within a day and text you once it's confirmed.",
+    "We check your GCash receipt within a day and text you once your payment is confirmed.",
     "We bake and pack your order within 2 business days and hand it to our courier.",
     "Nothing more to pay. The rider just hands over your parcel.",
+  ],
+  bank: [
+    "We check your transfer receipt within a day and text you once your payment is confirmed.",
+    "We bake and pack your order within 2 business days and hand it to our courier.",
+    "Nothing more to pay. Just give your order code when you pick up.",
   ],
 };
 
@@ -29,7 +35,12 @@ const PICKUP_STEPS = {
     "Pay in cash when you pick up. Having the exact amount ready helps.",
   ],
   gcash: [
-    "We verify your GCash reference within a day and text you once it's confirmed.",
+    "We check your GCash receipt within a day and text you once your payment is confirmed.",
+    "We bake your order within 2 business days and text you when it's ready.",
+    "Nothing more to pay. Just give your order code when you pick up.",
+  ],
+  bank: [
+    "We check your transfer receipt within a day and text you once your payment is confirmed.",
     "We bake your order within 2 business days and text you when it's ready.",
     "Nothing more to pay. Just give your order code when you pick up.",
   ],
@@ -100,10 +111,10 @@ export default async function ThankYouPage({ params }: { params: Promise<{ code:
           </div>
         </dl>
         <div className="mt-4 border-t border-border pt-4 text-[15px]">
-          <p className="font-semibold">{order.paymentMethod === "gcash" ? "GCash" : pickup ? "Cash on pickup" : "Cash on delivery"}</p>
-          {/* Order codes are easy to guess, so nothing personal (name, address, GCash reference) is shown here. */}
+          <p className="font-semibold">{paymentLabel(order.paymentMethod, pickup)}</p>
+          {/* Order codes are easy to guess, so nothing personal (name, address, reference, receipt) is shown here. */}
           <p className="text-muted-foreground">
-            {order.paymentMethod === "gcash" ? "We're checking the reference you sent." : pickup ? "Pay when you pick up." : "Pay when your order arrives."}
+            {order.paymentMethod === "cod" ? (pickup ? "Pay when you pick up." : "Pay when your order arrives.") : "We're checking the receipt you sent."}
           </p>
         </div>
       </section>

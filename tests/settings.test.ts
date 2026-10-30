@@ -11,6 +11,9 @@ test("defaults apply on an empty database", () => {
     pickupInfo: "We'll text you the pickup address and time once your order is confirmed.",
     labourRate: 8000,
     targetMarkup: 5,
+    bankName: "China Banking Corporation",
+    bankAccountNumber: "129000009744",
+    bankAccountName: "Thebakehubbywythlae Space Rental",
   });
 });
 

@@ -51,6 +51,7 @@ test("cancel survives a variant that was removed after the order", () => {
 test("unknown order id", () => {
   expect(changeStatus(424242, "confirmed").ok).toBe(false);
   expect(getOrder(424242)).toBeNull();
+  expect(getOrder(place())!.proof).toMatchObject({ mime: "image/png", fileName: "receipt.png" });
   expect(getOrderByCode("JC-0000-0000")).toBeNull();
 });
 

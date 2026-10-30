@@ -19,6 +19,9 @@ export default function SettingsPage() {
         initial={{
           freeShippingThreshold: pesoInputValue(s.freeShippingThreshold),
           gcashNumber: s.gcashNumber,
+          bankName: s.bankName,
+          bankAccountNumber: s.bankAccountNumber,
+          bankAccountName: s.bankAccountName,
           pickupInfo: s.pickupInfo,
           labourRate: pesoInputValue(s.labourRate),
           targetMarkup: String(s.targetMarkup),

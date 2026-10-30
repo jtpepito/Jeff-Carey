@@ -7,6 +7,7 @@ import { updateSettings, type Settings } from "@/lib/settings";
 
 export type SettingsFormValues = {
   freeShippingThreshold: string; gcashNumber: string; feeNcr: string; feeLuzon: string; feeVismin: string; pickupInfo: string; labourRate: string; targetMarkup: string;
+  bankName: string; bankAccountNumber: string; bankAccountName: string;
 };
 
 const MONEY_FIELDS = ["freeShippingThreshold", "feeNcr", "feeLuzon", "feeVismin", "labourRate"] as const;
@@ -31,6 +32,12 @@ export async function saveSettings(
   const markup = Number(String(values?.targetMarkup ?? "").trim());
   if (!(Number.isFinite(markup) && markup > 0)) return { ok: false, field: "targetMarkup", error: "Enter a multiplier above 0, like 5 or 3.5." };
   patch.targetMarkup = markup;
+
+  for (const [field, label] of [["bankName", "the bank's name"], ["bankAccountNumber", "the account number"], ["bankAccountName", "the account name"]] as const) {
+    const value = String(values?.[field] ?? "").trim();
+    if (!value) return { ok: false, field, error: `Enter ${label} customers should transfer to.` };
+    patch[field] = value.slice(0, 80);
+  }
 
   updateSettings(patch);
   revalidatePath("/", "layout");

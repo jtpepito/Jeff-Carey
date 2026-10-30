@@ -15,6 +15,13 @@ test("settings change the storefront", async ({ page }) => {
   await page.getByRole("button", { name: "Save settings" }).click();
   await expect(page.getByText("Enter a multiplier above 0, like 5 or 3.5.")).toBeVisible();
   await page.getByLabel("Target markup").fill("5");
+  await expect(page.getByLabel("Bank", { exact: true })).toHaveValue("China Banking Corporation");
+  await expect(page.getByLabel("Bank account number")).toHaveValue("129000009744");
+  await page.getByLabel("Bank account name").fill("");
+  await page.getByRole("button", { name: "Save settings" }).click();
+  await expect(page.getByText("Enter the account name customers should transfer to.")).toBeVisible();
+  await page.getByLabel("Bank account name").fill("Thebakehubbywythlae Space Rental");
+  await page.getByLabel("Bank account number").fill("1290 0000 9999");
   await page.getByLabel("GCash number").fill("0998 765 4321");
   await page.getByLabel("Pickup details").fill("Unit 2, 14 Sample St, Lahug. 10am to 6pm.");
   await page.getByRole("button", { name: "Save settings" }).click();
@@ -26,6 +33,7 @@ test("settings change the storefront", async ({ page }) => {
   await expect(page.getByRole("dialog")).not.toContainText("free shipping");
   await page.getByRole("dialog").getByRole("link", { name: /checkout/i }).click();
   await expect(page.getByText("Unit 2, 14 Sample St, Lahug. 10am to 6pm.")).toBeVisible();
+  await expect(page.getByTestId("bank-details")).toContainText("1290 0000 9999");
   await page.getByLabel("GCash", { exact: true }).check();
   await expect(page.getByText(/0998 765 4321/)).toBeVisible();
 });
