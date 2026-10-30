@@ -4,7 +4,7 @@ import { listOrders } from "@/lib/orders";
 import { priceRange } from "@/lib/pricing";
 import { listCategories, listProducts } from "@/lib/products";
 import { getRecipe, listComponents, listIngredients, productCosts } from "@/lib/recipes";
-import { applySeedPhotos, replaceStandInPhotos, seed, seedIfEmpty } from "@/lib/seed-data";
+import { applySeedPhotos, renameRetiredPhotos, replaceStandInPhotos, seed, seedIfEmpty } from "@/lib/seed-data";
 import { freshDb } from "./helpers";
 
 beforeEach(freshDb);
@@ -90,4 +90,22 @@ test("replaceStandInPhotos gives rolls still on stock photos the owner's photos,
   expect(images("choco-cinnamon-rolls")).toEqual(["https://example.com/my-own-photo.jpg"]); // chosen in admin: kept
   expect(images("oreo-cinnamon-rolls")).toEqual(oreoBefore); // no photo of our own yet
   expect(replaceStandInPhotos()).toBe(0);
+});
+
+test("photos that were replaced by a newer file are renamed wherever they are used", () => {
+  seed();
+  const set = (slug: string, images: string[]) => getDb().prepare("UPDATE products SET images = ? WHERE slug = ?").run(JSON.stringify(images), slug);
+  set("choco-cinnamon-rolls", ["/products/chocolate.jpg", "/products/cover-1.jpg"]);
+  set("oreo-cinnamon-rolls", ["https://example.com/oreo.jpg", "/products/chocolate.jpg"]);
+  const images = (slug: string) => listProducts().find((p) => p.slug === slug)!.images;
+
+  expect(renameRetiredPhotos()).toBe(2);
+  expect(images("choco-cinnamon-rolls")).toEqual(["/products/chocolate-2.jpg", "/products/cover-1.jpg"]);
+  expect(images("oreo-cinnamon-rolls")).toEqual(["https://example.com/oreo.jpg", "/products/chocolate-2.jpg"]);
+  expect(renameRetiredPhotos()).toBe(0);
+});
+
+test("a fresh seed already uses the newest chocolate photo", () => {
+  seed();
+  expect(listProducts().find((p) => p.slug === "choco-cinnamon-rolls")!.images[0]).toBe("/products/chocolate-2.jpg");
 });

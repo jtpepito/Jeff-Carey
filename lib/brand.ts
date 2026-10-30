@@ -34,7 +34,7 @@ export const brand = {
     { q: "Do you accept orders for corporate giveaways?", a: "Absolutely! We accept bulk orders for corporate giveaways, client appreciation gifts, team events, and special occasions. We can discuss packaging options, personalized messages, and order quantities to suit your needs. To ensure availability and allow adequate preparation time, we recommend placing corporate orders as early as possible." },
   ],
   /** Shown in the photo strip on the home page. */
-  gallery: ["/products/cover-1.jpg", "/products/original.jpg", "/products/chocolate.jpg", "/products/biscoff.jpg", "/products/cover-2.jpg"],
+  gallery: ["/products/cover-1.jpg", "/products/original.jpg", "/products/chocolate-2.jpg", "/products/biscoff.jpg", "/products/cover-2.jpg"],
   storyImage: "/products/cover-2.jpg",
   /** Photo for a category tile on the home page; a category without one uses its first product's photo. */
   categoryCovers: { "Cinnamon Rolls": "/products/cover-1.jpg" } as Record<string, string>,

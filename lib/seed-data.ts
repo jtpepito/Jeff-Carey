@@ -36,7 +36,7 @@ const PRODUCTS: SeedProduct[] = [
     slug: "choco-cinnamon-rolls", name: "Choco Cinnamon Rolls", category: "Cinnamon Rolls", featured: true,
     description: "The cinnamon swirl gets cocoa in the filling, then cream cheese frosting and a dark chocolate drizzle on top.",
     howToUse: "Best warm. 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature.",
-    photos: ["/products/chocolate.jpg", "/products/cover-1.jpg"], variants: ROLL_VARIANTS,
+    photos: ["/products/chocolate-2.jpg", "/products/cover-1.jpg"], variants: ROLL_VARIANTS,
     recipe: { yield: 42, labour: 0, packaging: 40, notes: ROLL_NOTES, items: [["Cinnamon roll dough", 42], ["Choco filling", 42], ["Cream cheese topping", 42], ["Chocolate topping", 42]] },
   },
   {
@@ -160,6 +160,36 @@ export function replaceStandInPhotos(): number {
     if (!onlyStock) continue;
     update.run(JSON.stringify(p.photos), p.slug);
     changed++;
+  }
+  return changed;
+}
+
+/**
+ * Photos replaced by a newer file. A new file gets a new name so browsers, which keep product images for
+ * up to 30 days, fetch it instead of showing the old one; this map moves existing products onto it.
+ */
+const RENAMED_PHOTOS: Record<string, string> = {
+  "/products/chocolate.jpg": "/products/chocolate-2.jpg",
+};
+
+/** Points every product at the newest file for any renamed photo. Runs at server start. Returns how many changed. */
+export function renameRetiredPhotos(): number {
+  const rows = getDb().prepare("SELECT id, images FROM products").all() as { id: number; images: string }[];
+  const update = getDb().prepare("UPDATE products SET images = ? WHERE id = ?");
+  let changed = 0;
+  for (const row of rows) {
+    let list: unknown;
+    try {
+      list = JSON.parse(row.images);
+    } catch {
+      continue;
+    }
+    if (!Array.isArray(list)) continue;
+    const next = list.map((u) => (typeof u === "string" && RENAMED_PHOTOS[u] ? RENAMED_PHOTOS[u] : u));
+    if (next.some((u, i) => u !== list[i])) {
+      update.run(JSON.stringify(next), row.id);
+      changed++;
+    }
   }
   return changed;
 }
