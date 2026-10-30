@@ -29,21 +29,21 @@ const PRODUCTS: SeedProduct[] = [
     slug: "og-cinnamon-rolls", name: "OG Cinnamon Rolls", category: "Cinnamon Rolls", featured: true,
     description: "Our original: soft, pull-apart rolls with a brown sugar and cinnamon swirl, topped with cream cheese frosting.",
     howToUse: "Best warm. 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature.",
-    photos: ["/products/original.jpg", "/products/cover-1.jpg"], variants: ROLL_VARIANTS,
+    photos: ["/products/original.jpg", "/products/cover-1-v2.jpg"], variants: ROLL_VARIANTS,
     recipe: { yield: 42, labour: 0, packaging: 40, notes: ROLL_NOTES, items: [["Cinnamon roll dough", 42], ["OG filling", 42], ["Cream cheese topping", 42]] },
   },
   {
     slug: "choco-cinnamon-rolls", name: "Choco Cinnamon Rolls", category: "Cinnamon Rolls", featured: true,
     description: "The cinnamon swirl gets cocoa in the filling, then cream cheese frosting and a dark chocolate drizzle on top.",
     howToUse: "Best warm. 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature.",
-    photos: ["/products/chocolate-2.jpg", "/products/cover-1.jpg"], variants: ROLL_VARIANTS,
+    photos: ["/products/chocolate-2.jpg", "/products/cover-1-v2.jpg"], variants: ROLL_VARIANTS,
     recipe: { yield: 42, labour: 0, packaging: 40, notes: ROLL_NOTES, items: [["Cinnamon roll dough", 42], ["Choco filling", 42], ["Cream cheese topping", 42], ["Chocolate topping", 42]] },
   },
   {
     slug: "biscoff-cinnamon-rolls", name: "Biscoff Cinnamon Rolls", category: "Cinnamon Rolls", featured: false,
     description: "The original roll finished with cream cheese frosting and a layer of Biscoff on top.",
     howToUse: "Best warm. 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature.",
-    photos: ["/products/biscoff-2.jpg", "/products/cover-2.jpg"], variants: ROLL_VARIANTS,
+    photos: ["/products/biscoff-2.jpg", "/products/cover-2-v2.jpg"], variants: ROLL_VARIANTS,
     recipe: { yield: 42, labour: 0, packaging: 40, notes: ROLL_NOTES, items: [["Cinnamon roll dough", 42], ["OG filling", 42], ["Cream cheese topping", 42], ["Biscoff spread", 210]] },
   },
   {
@@ -174,6 +174,8 @@ export function replaceStandInPhotos(): number {
 const RENAMED_PHOTOS: Record<string, string> = {
   "/products/chocolate.jpg": "/products/chocolate-2.jpg",
   "/products/biscoff.jpg": "/products/biscoff-2.jpg",
+  "/products/cover-1.jpg": "/products/cover-1-v2.jpg",
+  "/products/cover-2.jpg": "/products/cover-2-v2.jpg",
 };
 
 /** Points every product at the newest file for any renamed photo. Runs at server start. Returns how many changed. */

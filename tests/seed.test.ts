@@ -70,7 +70,7 @@ test("applySeedPhotos swaps stand-in photos for the ones shipped with the app, b
   getDb().prepare("UPDATE products SET images = ? WHERE slug = ?").run(JSON.stringify(["https://images.unsplash.com/photo-x"]), "og-cinnamon-rolls");
   expect(applySeedPhotos()).toBe(1);
   const og = listProducts().find((p) => p.slug === "og-cinnamon-rolls")!;
-  expect(og.images).toEqual(["/products/original.jpg", "/products/cover-1.jpg"]);
+  expect(og.images).toEqual(["/products/original.jpg", "/products/cover-1-v2.jpg"]);
   expect(applySeedPhotos()).toBe(0); // nothing left to change
 });
 
@@ -85,8 +85,8 @@ test("replaceStandInPhotos gives rolls still on stock photos the owner's photos,
   const oreoBefore = images("oreo-cinnamon-rolls");
 
   expect(replaceStandInPhotos()).toBe(2);
-  expect(images("og-cinnamon-rolls")).toEqual(["/products/original.jpg", "/products/cover-1.jpg"]);
-  expect(images("biscoff-cinnamon-rolls")).toEqual(["/products/biscoff-2.jpg", "/products/cover-2.jpg"]);
+  expect(images("og-cinnamon-rolls")).toEqual(["/products/original.jpg", "/products/cover-1-v2.jpg"]);
+  expect(images("biscoff-cinnamon-rolls")).toEqual(["/products/biscoff-2.jpg", "/products/cover-2-v2.jpg"]);
   expect(images("choco-cinnamon-rolls")).toEqual(["https://example.com/my-own-photo.jpg"]); // chosen in admin: kept
   expect(images("oreo-cinnamon-rolls")).toEqual(oreoBefore); // no photo of our own yet
   expect(replaceStandInPhotos()).toBe(0);
@@ -95,12 +95,12 @@ test("replaceStandInPhotos gives rolls still on stock photos the owner's photos,
 test("photos that were replaced by a newer file are renamed wherever they are used", () => {
   seed();
   const set = (slug: string, images: string[]) => getDb().prepare("UPDATE products SET images = ? WHERE slug = ?").run(JSON.stringify(images), slug);
-  set("choco-cinnamon-rolls", ["/products/chocolate.jpg", "/products/cover-1.jpg"]);
+  set("choco-cinnamon-rolls", ["/products/chocolate.jpg", "/products/cover-1-v2.jpg"]);
   set("oreo-cinnamon-rolls", ["https://example.com/oreo.jpg", "/products/chocolate.jpg"]);
   const images = (slug: string) => listProducts().find((p) => p.slug === slug)!.images;
 
   expect(renameRetiredPhotos()).toBe(2);
-  expect(images("choco-cinnamon-rolls")).toEqual(["/products/chocolate-2.jpg", "/products/cover-1.jpg"]);
+  expect(images("choco-cinnamon-rolls")).toEqual(["/products/chocolate-2.jpg", "/products/cover-1-v2.jpg"]);
   expect(images("oreo-cinnamon-rolls")).toEqual(["https://example.com/oreo.jpg", "/products/chocolate-2.jpg"]);
   expect(renameRetiredPhotos()).toBe(0);
 });
@@ -112,12 +112,32 @@ test("a fresh seed already uses the newest chocolate photo", () => {
 
 test("the Biscoff roll moves from the old photo to the cleaner one", () => {
   seed();
-  getDb().prepare("UPDATE products SET images = ? WHERE slug = ?").run(JSON.stringify(["/products/biscoff.jpg", "/products/cover-2.jpg"]), "biscoff-cinnamon-rolls");
+  getDb().prepare("UPDATE products SET images = ? WHERE slug = ?").run(JSON.stringify(["/products/biscoff.jpg", "/products/cover-2-v2.jpg"]), "biscoff-cinnamon-rolls");
   expect(renameRetiredPhotos()).toBe(1);
-  expect(listProducts().find((p) => p.slug === "biscoff-cinnamon-rolls")!.images).toEqual(["/products/biscoff-2.jpg", "/products/cover-2.jpg"]);
+  expect(listProducts().find((p) => p.slug === "biscoff-cinnamon-rolls")!.images).toEqual(["/products/biscoff-2.jpg", "/products/cover-2-v2.jpg"]);
 });
 
 test("a fresh seed already uses the newest Biscoff photo", () => {
   seed();
   expect(listProducts().find((p) => p.slug === "biscoff-cinnamon-rolls")!.images[0]).toBe("/products/biscoff-2.jpg");
+});
+
+test("the two tray cover photos move to their cleaner versions wherever they are used", () => {
+  seed();
+  const set = (slug: string, images: string[]) => getDb().prepare("UPDATE products SET images = ? WHERE slug = ?").run(JSON.stringify(images), slug);
+  set("og-cinnamon-rolls", ["/products/original.jpg", "/products/cover-1.jpg"]);
+  set("biscoff-cinnamon-rolls", ["/products/biscoff-2.jpg", "/products/cover-2.jpg"]);
+  renameRetiredPhotos();
+  const images = (slug: string) => listProducts().find((p) => p.slug === slug)!.images;
+  expect(images("og-cinnamon-rolls")).toEqual(["/products/original.jpg", "/products/cover-1-v2.jpg"]);
+  expect(images("biscoff-cinnamon-rolls")).toEqual(["/products/biscoff-2.jpg", "/products/cover-2-v2.jpg"]);
+});
+
+test("a fresh seed already uses the cleaner tray covers", () => {
+  seed();
+  const all = listProducts().flatMap((p) => p.images);
+  expect(all).not.toContain("/products/cover-1.jpg");
+  expect(all).not.toContain("/products/cover-2.jpg");
+  expect(all).toContain("/products/cover-1-v2.jpg");
+  expect(all).toContain("/products/cover-2-v2.jpg");
 });
