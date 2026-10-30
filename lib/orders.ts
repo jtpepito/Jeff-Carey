@@ -1,4 +1,4 @@
-import { getDb, tx } from "./db";
+import { backupDatabase, getDb, tx } from "./db";
 import { deliversTo, deliveryProvinces } from "./delivery";
 import { pickupOnly } from "./fulfilment";
 import { detectProofType, MAX_PROOF_BYTES, type CheckoutPayment, type PaymentMethod } from "./payment";
@@ -245,4 +245,28 @@ export function getPaymentProof(orderId: number): { fileName: string; mime: stri
     .prepare("SELECT file_name AS fileName, mime, size, data FROM payment_proofs WHERE order_id = ?")
     .get(orderId) as { fileName: string; mime: string; size: number; data: Uint8Array } | undefined;
   return row ? { ...row } : null;
+}
+
+/**
+ * Deletes every order with its items and receipt. Units held by orders that were not cancelled go back into
+ * stock (cancelled orders were restocked when they were cancelled). A full copy of the database is saved first.
+ * Order codes start again from 0001, since the next code follows the highest one left for the month.
+ */
+export function clearAllOrders(): { orders: number; unitsRestocked: number; backup: string | null } {
+  const backup = backupDatabase("before-clearing-orders");
+  return tx((db) => {
+    const orders = (db.prepare("SELECT COUNT(*) AS c FROM orders").get() as { c: number }).c;
+    const held = db
+      .prepare(
+        `SELECT oi.variant_id AS variantId, SUM(oi.qty) AS qty FROM order_items oi JOIN orders o ON o.id = oi.order_id
+         WHERE o.status <> 'cancelled' GROUP BY oi.variant_id`,
+      )
+      .all() as { variantId: number; qty: number }[];
+    const restock = db.prepare("UPDATE variants SET stock = stock + ? WHERE id = ?");
+    let unitsRestocked = 0;
+    for (const h of held) unitsRestocked += Number(restock.run(h.qty, h.variantId).changes) ? h.qty : 0;
+    db.exec("DELETE FROM payment_proofs; DELETE FROM order_items; DELETE FROM orders;");
+    db.exec("DELETE FROM sqlite_sequence WHERE name IN ('orders', 'order_items')");
+    return { orders, unitsRestocked, backup };
+  });
 }

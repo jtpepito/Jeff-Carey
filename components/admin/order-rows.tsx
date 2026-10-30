@@ -20,7 +20,7 @@ export function OrderRows({ orders }: { orders: OrderSummary[] }) {
       </div>
       <ul className="divide-y divide-border">
         {orders.map((o) => (
-          <li key={o.id}>
+          <li key={o.id} data-testid="order-row">
             <Link href={`/admin/orders/${o.id}`} className={`block px-4 py-3.5 hover:bg-muted/60 ${COLS}`}>
               <span className="flex items-center justify-between gap-3 md:contents">
                 <span className="font-semibold tabular-nums">{o.code}</span>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { AdminEmpty } from "@/components/admin/admin-empty";
+import { ClearOrders } from "@/components/admin/clear-orders";
 import { OrderRows } from "@/components/admin/order-rows";
 import { listOrders, ORDER_STATUSES, type OrderStatus } from "@/lib/orders";
 import { cn } from "@/lib/utils";
@@ -46,6 +47,7 @@ export default async function OrdersPage({ searchParams }: { searchParams: Promi
           <OrderRows orders={orders} />
         )}
       </div>
+      <ClearOrders count={listOrders().length} />
     </>
   );
 }

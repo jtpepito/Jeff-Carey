@@ -195,6 +195,19 @@ function allowBankTransfer(db: DatabaseSync) {
   }
 }
 
+/**
+ * Saves a full copy of the database next to it, named with the label and the time, and returns its path.
+ * Returns null for an in-memory database (tests), where there is nothing to keep.
+ */
+export function backupDatabase(label: string): string | null {
+  const file = dbPath();
+  if (file === ":memory:") return null;
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+  const backup = file.replace(/\.db$/, "") + `.${label}-${stamp}.db`;
+  getDb().exec(`VACUUM INTO '${backup.replace(/'/g, "''")}'`);
+  return backup;
+}
+
 export function closeDb() {
   g.__db?.close();
   g.__db = undefined;
