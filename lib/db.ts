@@ -23,7 +23,9 @@ const ordersTable = (name: string) => `CREATE TABLE IF NOT EXISTS ${name} (
   created_at TEXT NOT NULL,
   request_id TEXT,
   fulfilment TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfilment IN ('delivery','pickup')),
-  preferred_date TEXT
+  preferred_date TEXT,
+  email TEXT NOT NULL DEFAULT '',
+  ready_emailed_at TEXT
 );`;
 
 const SCHEMA = `
@@ -149,6 +151,8 @@ function migrate(db: DatabaseSync) {
   if (!orderColumns.includes("fulfilment"))
     db.exec("ALTER TABLE orders ADD COLUMN fulfilment TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfilment IN ('delivery','pickup'))");
   if (!orderColumns.includes("preferred_date")) db.exec("ALTER TABLE orders ADD COLUMN preferred_date TEXT");
+  if (!orderColumns.includes("email")) db.exec("ALTER TABLE orders ADD COLUMN email TEXT NOT NULL DEFAULT ''");
+  if (!orderColumns.includes("ready_emailed_at")) db.exec("ALTER TABLE orders ADD COLUMN ready_emailed_at TEXT");
   const variantColumns = db.prepare("PRAGMA table_info(variants)").all().map((c) => c.name);
   if (!variantColumns.includes("price")) db.exec("ALTER TABLE variants ADD COLUMN price INTEGER CHECK (price IS NULL OR price >= 0)");
   // The first costing release stored lines in recipe_items; recipe_lines replaced it.

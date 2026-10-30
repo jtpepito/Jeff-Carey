@@ -27,6 +27,7 @@ export async function submitOrder(form: FormData): Promise<PlaceResult> {
   return placeOrder({
     customerName: String(input.customerName ?? ""),
     mobile: String(input.mobile ?? ""),
+    email: String(input.email ?? "").slice(0, 300),
     province: String(input.province ?? ""),
     city: String(input.city ?? ""),
     address: String(input.address ?? ""),

@@ -92,7 +92,7 @@ export function CheckoutForm({ provinces, groups, settings, dates, pickupOnly }:
         body.append("order", JSON.stringify({
           requestId,
           fulfilment,
-          customerName: text("customerName"), mobile: text("mobile"), province, city, address: text("address"),
+          customerName: text("customerName"), mobile: text("mobile"), email: text("email"), province, city, address: text("address"),
           notes: text("notes"), preferredDate: text("preferredDate"), paymentMethod: payment, gcashRef: text("paymentRef"),
           lines: lines.map((l) => ({ variantId: l.variantId, qty: l.qty })),
         }));
@@ -137,6 +137,12 @@ export function CheckoutForm({ provinces, groups, settings, dates, pickupOnly }:
             <label htmlFor="f-mobile" className="field-label">Mobile number</label>
             <input id="f-mobile" name="mobile" className="field" inputMode="numeric" autoComplete="tel" placeholder="09XX XXX XXXX" />
             {errorFor("mobile")}
+          </div>
+          <div>
+            <label htmlFor="f-email" className="field-label">Email</label>
+            <input id="f-email" name="email" type="email" className="field" inputMode="email" autoComplete="email" maxLength={254} placeholder="name@example.com" />
+            <p className="mt-1 text-sm text-muted-foreground">We&apos;ll email you when your order is ready for pick-up.</p>
+            {errorFor("email")}
           </div>
         </fieldset>
 

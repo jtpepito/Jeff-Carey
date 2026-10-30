@@ -8,6 +8,8 @@ import { formatPeso } from "@/lib/money";
 import { getOrder, nextStatuses } from "@/lib/orders";
 import { formatDateOnly, formatManila } from "@/lib/time";
 import { paymentLabel } from "@/lib/payment";
+import { ReadyEmailButton } from "@/components/admin/ready-email-button";
+import { emailConfigured } from "@/lib/email";
 
 export const metadata: Metadata = { title: "Order" };
 
@@ -38,6 +40,22 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
             <h2 id="next-step" className="text-xl">Next step</h2>
             <div className="mt-3">
               <OrderStatusButtons orderId={order.id} next={nextStatuses(order.status)} />
+            </div>
+            <div className="mt-4 border-t border-border pt-4">
+              <ReadyEmailButton
+                orderId={order.id}
+                email={order.email}
+                sentAt={order.readyEmailedAt ? formatManila(order.readyEmailedAt) : null}
+                blockedReason={
+                  order.status === "cancelled"
+                    ? "This order was cancelled."
+                    : !order.email
+                      ? "No email address on this order (placed before checkout asked for one)."
+                      : !emailConfigured()
+                        ? "Email isn't set up yet. Add the shop's Gmail address and app password as Fly secrets (see the README)."
+                        : null
+                }
+              />
             </div>
           </section>
 
@@ -71,6 +89,9 @@ export default async function OrderPage({ params }: { params: Promise<{ id: stri
             <h2 id="customer" className="text-xl">Customer</h2>
             <p className="mt-2 font-medium">{order.customerName}</p>
             <a href={`tel:${order.mobile}`} className="inline-flex min-h-11 items-center font-medium text-primary underline underline-offset-4">{order.mobile}</a>
+            {order.email ? (
+              <a href={`mailto:${order.email}`} className="block min-h-11 break-all font-medium text-primary underline underline-offset-4">{order.email}</a>
+            ) : null}
             {pickup ? (
               <p className="mt-2 inline-block rounded-full bg-gold/25 px-3 py-1 text-sm font-semibold text-[#5f4a0c]">Customer will pick up</p>
             ) : (

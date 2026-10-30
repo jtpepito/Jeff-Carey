@@ -278,7 +278,7 @@ export function seed(now: Date = new Date()): void {
     const placedAt = new Date(now.getTime() - o.daysAgo * DAY_MS);
     const r = placeOrder(
       {
-        customerName: o.name, mobile: o.mobile, province: "Cebu", city: o.city, address: o.address, preferredDate: manilaDate(placedAt, 3),
+        customerName: o.name, mobile: o.mobile, email: `${o.name.toLowerCase().replace(/[^a-z]+/g, ".")}@example.com`, province: "Cebu", city: o.city, address: o.address, preferredDate: manilaDate(placedAt, 3),
         notes: o.notes, fulfilment: o.pickup || pickupOnly() ? "pickup" : "delivery", paymentMethod: o.gcashRef ? "gcash" : "bank", gcashRef: o.gcashRef, proof: { name: "sample-receipt.png", data: SAMPLE_RECEIPT },
         lines: o.items.map(([slug, variant, qty]) => ({ variantId: variantId.get(`${slug}|${variant}`) ?? -1, qty })),
       },

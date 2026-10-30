@@ -11,7 +11,10 @@ import { manilaDate, manilaDayRange } from "./time";
 export type Fulfilment = "delivery" | "pickup";
 
 export type OrderInput = {
-  customerName: string; mobile: string; province: string; city: string; address: string;
+  customerName: string; mobile: string;
+  /** Where we send the "ready for pick-up" email. */
+  email?: string;
+  province: string; city: string; address: string;
   notes?: string; paymentMethod: CheckoutPayment;
   /** Optional reference number from the bank or GCash receipt. */
   gcashRef?: string;
@@ -43,6 +46,7 @@ const fail = (field: string, error: string): PlaceResult => ({ ok: false, field,
 export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResult {
   const customerName = input.customerName?.trim() ?? "";
   const mobile = (input.mobile ?? "").replace(/[\s-]/g, "");
+  const email = (input.email ?? "").trim();
   const fulfilment = input.fulfilment ?? (pickupOnly() ? "pickup" : "delivery");
   const pickup = fulfilment === "pickup";
   const address = pickup ? "" : (input.address?.trim() ?? "");
@@ -50,6 +54,8 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
 
   if (!customerName) return fail("customerName", "Enter your name.");
   if (!/^09\d{9}$/.test(mobile)) return fail("mobile", "Enter an 11-digit mobile number starting with 09.");
+  if (!email) return fail("email", "Enter your email so we can tell you when your order is ready.");
+  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail("email", "Enter a valid email address, like name@example.com.");
   if (fulfilment !== "delivery" && fulfilment !== "pickup") return fail("fulfilment", "Choose delivery or pickup.");
   if (fulfilment === "delivery" && pickupOnly()) return fail("fulfilment", "All orders are for pick-up at the moment.");
   const group = pickup ? null : regionGroupOf(input.province);
@@ -116,13 +122,13 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
       const orderId = db
         .prepare(
           `INSERT INTO orders (code, customer_name, mobile, province, city, address, notes, payment_method,
-             gcash_ref, shipping_fee, subtotal, total, status, created_at, request_id, fulfilment, preferred_date)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?, ?)`,
+             gcash_ref, shipping_fee, subtotal, total, status, created_at, request_id, fulfilment, preferred_date, email)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?, ?, ?)`,
         )
         .run(
           code, customerName, mobile, pickup ? "" : input.province, pickup ? "" : input.city, address, input.notes?.trim() ?? "",
           input.paymentMethod, gcashRef || null,
-          fee, subtotal, subtotal + fee, now.toISOString(), requestId, fulfilment, preferredDate,
+          fee, subtotal, subtotal + fee, now.toISOString(), requestId, fulfilment, preferredDate, email,
         ).lastInsertRowid;
 
       const addItem = db.prepare(
@@ -144,7 +150,8 @@ export type OrderItem = { id: number; productId: number; variantId: number; name
 export type Order = {
   id: number; code: string; customerName: string; mobile: string; province: string; city: string;
   address: string; notes: string; adminNotes: string; paymentMethod: PaymentMethod; gcashRef: string | null;
-  shippingFee: number; subtotal: number; total: number; status: OrderStatus; createdAt: string; fulfilment: Fulfilment; preferredDate: string | null; items: OrderItem[];
+  shippingFee: number; subtotal: number; total: number; status: OrderStatus; createdAt: string; fulfilment: Fulfilment; preferredDate: string | null;
+  email: string; readyEmailedAt: string | null; items: OrderItem[];
   /** The customer's receipt, if one was uploaded (orders paid in cash before have none). */
   proof: { fileName: string; mime: string; size: number } | null;
 };
@@ -166,7 +173,8 @@ export function nextStatuses(s: OrderStatus): OrderStatus[] {
 
 const ORDER_COLUMNS = `id, code, customer_name AS customerName, mobile, province, city, address, notes,
   admin_notes AS adminNotes, payment_method AS paymentMethod, gcash_ref AS gcashRef,
-  shipping_fee AS shippingFee, subtotal, total, status, created_at AS createdAt, fulfilment, preferred_date AS preferredDate`;
+  shipping_fee AS shippingFee, subtotal, total, status, created_at AS createdAt, fulfilment, preferred_date AS preferredDate,
+  email, ready_emailed_at AS readyEmailedAt`;
 
 function withItems(row: OrderSummary | undefined): Order | null {
   if (!row) return null;

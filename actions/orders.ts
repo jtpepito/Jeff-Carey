@@ -2,7 +2,9 @@
 
 import { revalidatePath } from "next/cache";
 import { requireAdmin } from "@/lib/admin-session";
+import { defaultSender } from "@/lib/email";
 import { changeStatus, ORDER_STATUSES, setAdminNotes, type OrderStatus } from "@/lib/orders";
+import { sendReadyEmail, type ReadyEmailResult } from "@/lib/ready-email";
 
 export async function moveOrder(id: number, to: OrderStatus): Promise<{ ok: true } | { ok: false; error: string }> {
   await requireAdmin();
@@ -18,4 +20,13 @@ export async function saveAdminNotes(id: number, notes: string): Promise<void> {
   if (!Number.isInteger(id)) return;
   setAdminNotes(id, String(notes ?? "").slice(0, 2000));
   revalidatePath("/admin", "layout");
+}
+
+/** Emails the customer that their order is ready for pick-up. */
+export async function sendReadyEmailAction(id: number): Promise<ReadyEmailResult> {
+  await requireAdmin();
+  if (!Number.isInteger(id)) return { ok: false, error: "That order isn't valid." };
+  const result = await sendReadyEmail(id, defaultSender());
+  if (result.ok) revalidatePath("/admin", "layout");
+  return result;
 }

@@ -14,6 +14,7 @@ async function addAndCheckout(page: Page, slug: string, extraQty = 0) {
 async function fillContact(page: Page, { receipt = true } = {}) {
   await page.getByLabel("Full name").fill("Ana Reyes");
   await page.getByLabel("Mobile number").fill("09171234567");
+  await page.getByLabel("Email").fill("ana@example.com");
   await page.getByLabel("Preferred pickup date").fill(earliestDate(3));
   if (receipt) await page.getByLabel("Proof of payment").setInputFiles(RECEIPT);
 }
@@ -88,6 +89,13 @@ test("field errors show beside the field, including a pickup date that is too so
   await page.getByRole("button", { name: "Place order" }).click();
   await expect(page.getByText("Enter an 11-digit mobile number starting with 09.")).toBeVisible();
   await page.getByLabel("Mobile number").fill("09171234567");
+  await page.getByLabel("Email").fill("ana@");
+  await page.getByRole("button", { name: "Place order" }).click();
+  await expect(page.getByText("Enter a valid email address, like name@example.com.")).toBeVisible();
+  await page.getByLabel("Email").fill("");
+  await page.getByRole("button", { name: "Place order" }).click();
+  await expect(page.getByText("Enter your email so we can tell you when your order is ready.")).toBeVisible();
+  await page.getByLabel("Email").fill("ana@example.com");
   await page.getByLabel("Preferred pickup date").fill(earliestDate(0));
   await page.getByRole("button", { name: "Place order" }).click();
   await expect(page.getByText(/at least 2 days/)).toBeVisible();
@@ -97,6 +105,7 @@ test("the admin sees the pickup, the wanted-by date and the receipt; signed-out 
   await addAndCheckout(page, "og-cinnamon-rolls"); // Box of 4 ₱231
   await page.getByLabel("Full name").fill("Lia Go");
   await page.getByLabel("Mobile number").fill("09175556666");
+  await page.getByLabel("Email").fill("lia@example.com");
   await page.getByLabel("Preferred pickup date").fill(earliestDate(2));
   await page.getByLabel("Proof of payment").setInputFiles(RECEIPT);
   await page.getByRole("button", { name: "Place order" }).click();
@@ -113,6 +122,10 @@ test("the admin sees the pickup, the wanted-by date and the receipt; signed-out 
   await expect(page.getByText("Customer will pick up")).toBeVisible();
   await expect(page.getByText("Wanted by")).toBeVisible();
   await expect(page.getByText("Bank transfer", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "lia@example.com" })).toBeVisible();
+  // The test servers have no mail account, so the button explains instead of failing.
+  await expect(page.getByRole("button", { name: "Send email: ready for pick-up" })).toBeDisabled();
+  await expect(page.getByText(/Email isn.t set up yet/)).toBeVisible();
   const link = page.getByRole("link", { name: "View proof of payment" });
   const href = (await link.getAttribute("href"))!;
   const res = await page.request.get(href);

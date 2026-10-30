@@ -7,6 +7,7 @@ test("a storefront order appears as new with correct totals, then cancel restore
   await page.getByRole("dialog").getByRole("link", { name: /checkout/i }).click();
   await page.getByLabel("Full name").fill("Carlo Dizon");
   await page.getByLabel("Mobile number").fill("09181112222");
+  await page.getByLabel("Email").fill("carlo@example.com");
   await page.getByLabel("Preferred pickup date").fill(earliestDate(4));
   await page.getByLabel("GCash", { exact: true }).check();
   await page.getByLabel("Proof of payment").setInputFiles(RECEIPT);

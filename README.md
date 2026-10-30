@@ -90,6 +90,10 @@ Stop any running dev or production server before `npm run build` or `npm run e2e
   prices yet and were not imported.
 - **Preferred date**: every order carries the day the customer wants it delivered or picked up, at least
   `MIN_LEAD_DAYS` (2) and at most `MAX_LEAD_DAYS` (60) days out, Manila time. Staff see it as "Wanted by".
+- **Email**: checkout asks for an email; the admin order page has "Send email: ready for pick-up". It sends
+  through a Gmail account: set `SMTP_USER` (the Gmail address) and `SMTP_PASSWORD` (an app password) — on Fly,
+  `fly secrets set SMTP_USER=... SMTP_PASSWORD=... --app jef-carey`. Optional: `SMTP_FROM_NAME`, `SMTP_HOST`,
+  `SMTP_PORT`. Without them the button is disabled with a note. Sample orders use @example.com addresses.
 - **Pickup-only mode**: `pickupOnly: true` in `lib/brand.ts` (the current setting). Checkout offers no delivery
   choice, address or fee, the cart drops its free-shipping bar, and settings hide the fee fields. Set it to
   false to bring delivery back.

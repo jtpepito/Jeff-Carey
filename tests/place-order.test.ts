@@ -199,3 +199,13 @@ test("when the shop is pickup-only, delivery orders are refused and pickup is th
     process.env.ALLOW_DELIVERY = "1";
   }
 });
+
+test("an email address is required and kept trimmed", () => {
+  expect(placeOrder(order({ email: "" }), NOW)).toMatchObject({ ok: false, field: "email" });
+  expect(placeOrder(order({ email: "ana@" }), NOW)).toMatchObject({ ok: false, field: "email" });
+  expect(placeOrder(order({ email: "ana reyes@example.com" }), NOW)).toMatchObject({ ok: false, field: "email" });
+  expect(placeOrder(order({ email: "a".repeat(250) + "@x.co" }), NOW)).toMatchObject({ ok: false, field: "email" });
+  expect(orderCount()).toBe(0);
+  placeOrder(order({ email: "  Ana.Reyes@Example.com " }), NOW);
+  expect((getDb().prepare("SELECT email FROM orders").get() as { email: string }).email).toBe("Ana.Reyes@Example.com");
+});

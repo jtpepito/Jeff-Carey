@@ -26,7 +26,7 @@ export function setupShop() {
 
 export function order(over: Partial<OrderInput> = {}): OrderInput {
   return {
-    customerName: "Ana Reyes", mobile: "09171234567", province: "Cebu", city: "Cebu City",
+    customerName: "Ana Reyes", mobile: "09171234567", email: "ana@example.com", province: "Cebu", city: "Cebu City",
     address: "12 Mabini St", paymentMethod: "bank", proof: receipt(), preferredDate: "2026-10-07", lines: [{ variantId: ids.v250, qty: 1 }], ...over,
   };
 }

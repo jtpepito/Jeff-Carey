@@ -34,6 +34,7 @@ export function OrderRows({ orders }: { orders: OrderSummary[] }) {
                 <span className="truncate">
                   {o.customerName}
                   {o.fulfilment === "pickup" ? <span className="ml-2 rounded-full bg-gold/25 px-2 py-0.5 text-xs font-semibold text-[#5f4a0c]">Pickup</span> : null}
+                  {o.readyEmailedAt ? <span className="ml-2 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary">Ready email sent</span> : null}
                 </span>
                 <span className="font-semibold tabular-nums md:text-right">{formatPeso(o.total)}</span>
               </span>
