@@ -13,10 +13,10 @@ export const brand = {
   storyHeadline: "Every cinnamon roll tells a story that began at home.",
   story: [
     "What started as a family's love for warm, freshly baked cinnamon rolls soon became a tradition. There was something special about gathering around the table, sharing soft, sweet rolls straight from the oven, and creating moments that brought everyone a little closer together. Those simple moments of comfort, joy, and togetherness inspired us to turn our passion into something we could share with others.",
-    "Driven by our love for baking and our desire to create memorable treats, Jef & Carey was born. We carefully craft each batch using quality ingredients, traditional techniques, and a whole lot of heart. From the rich cinnamon filling to the perfectly soft dough, every roll is made with the same care and attention that we would give to our own family's table.",
+    "Driven by our love for baking and our desire to create memorable treats, Jef&Carey was born. We carefully craft each batch using quality ingredients, traditional techniques, and a whole lot of heart. From the rich cinnamon filling to the perfectly soft dough, every roll is made with the same care and attention that we would give to our own family's table.",
     "More than just a bakery, we believe that good food creates meaningful connections. Whether you're enjoying a quiet morning coffee, celebrating a special occasion, sending a thoughtful gift, or sharing a box with loved ones, we hope our bakes become part of your own cherished moments.",
     "Today, we're proud to share our family's favorite treats with our community, one freshly baked cinnamon roll at a time.",
-    "From our family to yours, thank you for being part of the Jef & Carey story.",
+    "From our family to yours, thank you for being part of the Jef&Carey story.",
   ],
   storyImageAlt: "A tray of Biscoff cinnamon rolls fresh from the oven",
   shippingCopy: [
