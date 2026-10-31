@@ -54,7 +54,8 @@ export async function deleteComponentAction(id: number): Promise<Result> {
   return result;
 }
 
-export async function lineFromForm(l: LineFormValues): Promise<LineInput> {
+// Not exported: everything exported from a "use server" file becomes a public endpoint.
+function lineFromForm(l: LineFormValues): LineInput {
   const [kind, id] = String(l?.ref ?? "").split(":");
   return { ingredientId: kind === "i" ? Number(id) : null, componentId: kind === "c" ? Number(id) : null, qty: num(l?.qty) };
 }
@@ -63,20 +64,20 @@ export async function saveRecipeAction(productId: number, v: RecipeFormValues): 
   await requireAdmin();
   const packagingCost = parsePeso(String(v?.packagingCost ?? "") || "0");
   if (packagingCost === null) return { ok: false, field: "packagingCost", error: "Enter the packaging cost like 12 or 12.50." };
-  const lines = async (ls: LineFormValues[] | undefined) => Promise.all((Array.isArray(ls) ? ls : []).map(lineFromForm));
+  const lines = (ls: LineFormValues[] | undefined) => (Array.isArray(ls) ? ls : []).map(lineFromForm);
   const variants = [];
   for (const rv of Array.isArray(v?.variants) ? v.variants : []) {
     const override = String(rv?.packagingCost ?? "").trim();
     const vp = override ? parsePeso(override) : null;
     if (override && vp === null) return { ok: false, field: "variants", error: "An option packaging cost must look like 28 or 28.50, or be blank." };
-    variants.push({ variantId: Number(rv.variantId), pieces: whole(String(rv?.pieces ?? "") || "1"), packagingCost: vp, items: await lines(rv.items) });
+    variants.push({ variantId: Number(rv.variantId), pieces: whole(String(rv?.pieces ?? "") || "1"), packagingCost: vp, items: lines(rv.items) });
   }
   const result = saveRecipe(productId, {
     yield: whole(v?.yield),
     labourMinutes: whole(String(v?.labourMinutes ?? "") || "0"),
     packagingCost,
     notes: String(v?.notes ?? "").slice(0, 2000),
-    items: await lines(v?.items),
+    items: lines(v?.items),
     variants,
   });
   if (result.ok) revalidatePath("/admin", "layout");

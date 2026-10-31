@@ -49,3 +49,12 @@ test("product page: compare-at, sold-out variant disabled, related products", as
 test("unknown product is a 404", async ({ page }) => {
   expect((await page.goto("/product/nope"))!.status()).toBe(404);
 });
+
+test("every response carries the security headers", async ({ page }) => {
+  const h = (await page.request.get("/")).headers();
+  expect(h["strict-transport-security"]).toContain("max-age=31536000");
+  expect(h["x-frame-options"]).toBe("DENY");
+  expect(h["x-content-type-options"]).toBe("nosniff");
+  expect(h["content-security-policy"]).toContain("frame-ancestors 'none'");
+  expect(h["x-powered-by"]).toBeUndefined();
+});

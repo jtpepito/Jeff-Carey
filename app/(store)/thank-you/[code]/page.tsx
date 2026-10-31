@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ClearCart } from "@/components/store/clear-cart";
+import { sameString } from "@/lib/auth";
 import { formatPeso } from "@/lib/money";
 import { getOrderByCode } from "@/lib/orders";
 import { getSettings } from "@/lib/settings";
@@ -46,9 +47,13 @@ const PICKUP_STEPS = {
   ],
 };
 
-export default async function ThankYouPage({ params }: { params: Promise<{ code: string }> }) {
+type Props = { params: Promise<{ code: string }>; searchParams: Promise<{ k?: string | string[] }> };
+
+export default async function ThankYouPage({ params, searchParams }: Props) {
   const order = getOrderByCode(decodeURIComponent((await params).code));
-  if (!order) notFound();
+  const k = (await searchParams).k;
+  // Order codes run in sequence, so the page opens only with the secret token checkout put in the link.
+  if (!order?.viewToken || typeof k !== "string" || !sameString(k, order.viewToken)) notFound();
   const pickup = order.fulfilment === "pickup";
 
   return (

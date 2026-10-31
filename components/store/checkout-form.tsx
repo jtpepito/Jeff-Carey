@@ -113,7 +113,7 @@ export function CheckoutForm({ provinces, groups, settings, dates, pickupOnly }:
       }
       if (result.ok) {
         setPlaced(true);
-        router.push(`/thank-you/${result.code}`);
+        router.push(`/thank-you/${result.code}?k=${encodeURIComponent(result.token)}`);
         return;
       }
       submitting.current = false;

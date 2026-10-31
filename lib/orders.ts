@@ -32,7 +32,12 @@ export type OrderInput = {
 export const MIN_LEAD_DAYS = 2;
 export const MAX_LEAD_DAYS = 60;
 
-export type PlaceResult = { ok: true; code: string } | { ok: false; error: string; field: string };
+/** `token` is the secret that lets the customer open the thank-you page for a code anyone could guess. */
+export type PlaceResult = { ok: true; code: string; token: string } | { ok: false; error: string; field: string };
+/** Orders still waiting for confirmation that one customer (by mobile or email) may have at a time. */
+export const MAX_OPEN_ORDERS_PER_CUSTOMER = 3;
+
+const newViewToken = () => Buffer.from(crypto.getRandomValues(new Uint8Array(9))).toString("base64url");
 
 const MAX_QTY_PER_LINE = 99;
 
@@ -55,7 +60,10 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
   if (!customerName) return fail("customerName", "Enter your name.");
   if (!/^09\d{9}$/.test(mobile)) return fail("mobile", "Enter an 11-digit mobile number starting with 09.");
   if (!email) return fail("email", "Enter your email so we can tell you when your order is ready.");
-  if (email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return fail("email", "Enter a valid email address, like name@example.com.");
+  // Only the usual address characters: no commas, semicolons, brackets, quotes or query strings, so an address can
+  // never smuggle a second recipient into the mail we send or the mailto: link the admin clicks.
+  if (email.length > 254 || !/^[A-Za-z0-9._+-]+@[A-Za-z0-9-]+(\.[A-Za-z0-9-]+)+$/.test(email))
+    return fail("email", "Enter a valid email address, like name@example.com.");
   if (fulfilment !== "delivery" && fulfilment !== "pickup") return fail("fulfilment", "Choose delivery or pickup.");
   if (fulfilment === "delivery" && pickupOnly()) return fail("fulfilment", "All orders are for pick-up at the moment.");
   const group = pickup ? null : regionGroupOf(input.province);
@@ -94,9 +102,19 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
       const requestId = input.requestId?.trim() || null;
       if (requestId) {
         // The shopper's first attempt may have succeeded even though the reply never reached them.
-        const earlier = db.prepare("SELECT code FROM orders WHERE request_id = ?").get(requestId) as { code: string } | undefined;
-        if (earlier) return { ok: true as const, code: earlier.code };
+        const earlier = db.prepare("SELECT code, view_token AS token FROM orders WHERE request_id = ?").get(requestId) as
+          | { code: string; token: string | null }
+          | undefined;
+        if (earlier) return { ok: true as const, code: earlier.code, token: earlier.token ?? "" };
       }
+      const open = (
+        db.prepare("SELECT COUNT(*) AS c FROM orders WHERE status = 'new' AND (mobile = ? OR lower(email) = lower(?))").get(mobile, email) as { c: number }
+      ).c;
+      if (open >= MAX_OPEN_ORDERS_PER_CUSTOMER)
+        throw new OrderError(
+          `You already have ${MAX_OPEN_ORDERS_PER_CUSTOMER} orders waiting for confirmation. We'll confirm those first; after that you can order again.`,
+          "mobile",
+        );
       const find = db.prepare(
         `SELECT v.name AS vname, p.id AS pid, p.name AS pname, COALESCE(v.price, p.price) AS price, p.active
          FROM variants v JOIN products p ON p.id = v.product_id WHERE v.id = ?`,
@@ -119,16 +137,17 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
 
       const fee = group ? shippingFee(subtotal, group, getSettings()) : 0;
       const code = nextOrderCode(db, now);
+      const token = newViewToken();
       const orderId = db
         .prepare(
           `INSERT INTO orders (code, customer_name, mobile, province, city, address, notes, payment_method,
-             gcash_ref, shipping_fee, subtotal, total, status, created_at, request_id, fulfilment, preferred_date, email)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?, ?, ?)`,
+             gcash_ref, shipping_fee, subtotal, total, status, created_at, request_id, fulfilment, preferred_date, email, view_token)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new', ?, ?, ?, ?, ?, ?)`,
         )
         .run(
           code, customerName, mobile, pickup ? "" : input.province, pickup ? "" : input.city, address, input.notes?.trim() ?? "",
           input.paymentMethod, gcashRef || null,
-          fee, subtotal, subtotal + fee, now.toISOString(), requestId, fulfilment, preferredDate, email,
+          fee, subtotal, subtotal + fee, now.toISOString(), requestId, fulfilment, preferredDate, email, token,
         ).lastInsertRowid;
 
       const addItem = db.prepare(
@@ -137,7 +156,7 @@ export function placeOrder(input: OrderInput, now: Date = new Date()): PlaceResu
       for (const i of items) addItem.run(orderId, i.pid, i.vid, i.name, i.price, i.qty);
       db.prepare("INSERT INTO payment_proofs (order_id, file_name, mime, size, data, created_at) VALUES (?, ?, ?, ?, ?, ?)")
         .run(orderId, proofName, proofMime, proofData.length, proofData, now.toISOString());
-      return { ok: true as const, code };
+      return { ok: true as const, code, token };
     });
   } catch (e) {
     if (e instanceof OrderError) return fail(e.field, e.message);
@@ -151,7 +170,10 @@ export type Order = {
   id: number; code: string; customerName: string; mobile: string; province: string; city: string;
   address: string; notes: string; adminNotes: string; paymentMethod: PaymentMethod; gcashRef: string | null;
   shippingFee: number; subtotal: number; total: number; status: OrderStatus; createdAt: string; fulfilment: Fulfilment; preferredDate: string | null;
-  email: string; readyEmailedAt: string | null; items: OrderItem[];
+  email: string; readyEmailedAt: string | null;
+  /** Secret in the thank-you link; orders placed before it existed have none. */
+  viewToken: string | null;
+  items: OrderItem[];
   /** The customer's receipt, if one was uploaded (orders paid in cash before have none). */
   proof: { fileName: string; mime: string; size: number } | null;
 };
@@ -174,7 +196,7 @@ export function nextStatuses(s: OrderStatus): OrderStatus[] {
 const ORDER_COLUMNS = `id, code, customer_name AS customerName, mobile, province, city, address, notes,
   admin_notes AS adminNotes, payment_method AS paymentMethod, gcash_ref AS gcashRef,
   shipping_fee AS shippingFee, subtotal, total, status, created_at AS createdAt, fulfilment, preferred_date AS preferredDate,
-  email, ready_emailed_at AS readyEmailedAt`;
+  email, ready_emailed_at AS readyEmailedAt, view_token AS viewToken`;
 
 function withItems(row: OrderSummary | undefined): Order | null {
   if (!row) return null;

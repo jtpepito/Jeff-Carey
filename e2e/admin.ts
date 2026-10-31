@@ -1,5 +1,8 @@
 import type { Page } from "@playwright/test";
 
+/** The order code in a thank-you URL, which also carries the secret ?k= token. */
+export const codeInUrl = (page: Page) => new URL(page.url()).pathname.split("/").pop()!;
+
 /** Signs in with the password the e2e servers are started with (see playwright.config.ts). */
 
 /** The earliest date checkout accepts: two days from today, Manila time, as YYYY-MM-DD. */

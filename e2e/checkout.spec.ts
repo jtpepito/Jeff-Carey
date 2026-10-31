@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { earliestDate, RECEIPT, signIn } from "./admin";
+import { codeInUrl, earliestDate, RECEIPT, signIn } from "./admin";
 
 // The shop is pickup-only and takes bank transfer or GCash, each with a receipt attached.
 
@@ -11,10 +11,12 @@ async function addAndCheckout(page: Page, slug: string, extraQty = 0) {
   await expect(page).toHaveURL(/\/checkout/);
 }
 
+// A different customer for every order: one customer may only have a few orders waiting for confirmation.
 async function fillContact(page: Page, { receipt = true } = {}) {
+  const n = String(Math.floor(Math.random() * 1e9)).padStart(9, "0");
   await page.getByLabel("Full name").fill("Ana Reyes");
-  await page.getByLabel("Mobile number").fill("09171234567");
-  await page.getByLabel("Email").fill("ana@example.com");
+  await page.getByLabel("Mobile number").fill("09" + n);
+  await page.getByLabel("Email").fill(`ana+${n}@example.com`);
   await page.getByLabel("Preferred pickup date").fill(earliestDate(3));
   if (receipt) await page.getByLabel("Proof of payment").setInputFiles(RECEIPT);
 }
@@ -110,7 +112,7 @@ test("the admin sees the pickup, the wanted-by date and the receipt; signed-out 
   await page.getByLabel("Proof of payment").setInputFiles(RECEIPT);
   await page.getByRole("button", { name: "Place order" }).click();
   await page.waitForURL(/\/thank-you\/JC-\d{4}-\d{4}/);
-  const code = page.url().split("/").pop()!;
+  const code = codeInUrl(page);
 
   await signIn(page);
   await page.goto("/admin/orders?status=new");
@@ -144,9 +146,13 @@ test("double tap on Place order creates one order", async ({ page }) => {
   await fillContact(page);
   await page.getByRole("button", { name: "Place order" }).dblclick();
   await expect(page).toHaveURL(/\/thank-you\/JC-\d{4}-\d{4}/);
-  const [prefix, month, n] = page.url().split("/").pop()!.split("-");
+  const code = codeInUrl(page);
+  const [prefix, month, n] = code.split("-");
   const next = `${prefix}-${month}-${String(Number(n) + 1).padStart(4, "0")}`;
   expect((await page.request.get(`/thank-you/${next}`)).status()).toBe(404);
+  // The code alone, without the token from checkout, does not open the page either.
+  expect((await page.request.get(`/thank-you/${code}`)).status()).toBe(404);
+  expect((await page.request.get(page.url())).status()).toBe(200);
 });
 
 test("a dropped connection shows a retry message, and retrying places one order", async ({ page }) => {

@@ -4,12 +4,15 @@ import { logout } from "@/actions/auth";
 import { AdminNav } from "@/components/admin/admin-nav";
 import { Toaster } from "@/components/ui/sonner";
 import { Logo } from "@/components/logo";
+import { requireAdmin } from "@/lib/admin-session";
 import { brand } from "@/lib/brand";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: { default: "Admin", template: `%s | ${brand.name} admin` }, robots: { index: false } };
 
-export default function ConsoleLayout({ children }: { children: React.ReactNode }) {
+export default async function ConsoleLayout({ children }: { children: React.ReactNode }) {
+  // Middleware already turns strangers away; this is the second lock in case the middleware is ever misconfigured.
+  await requireAdmin();
   return (
     <>
       <header className="border-b border-border bg-card">

@@ -1,6 +1,6 @@
 import { beforeEach, expect, test } from "vitest";
 import { getDb } from "@/lib/db";
-import { placeOrder, type OrderInput } from "@/lib/orders";
+import { getOrderByCode, MAX_OPEN_ORDERS_PER_CUSTOMER, placeOrder, type OrderInput } from "@/lib/orders";
 import { getProductById, updateProduct } from "@/lib/products";
 import { ids, NOW, order, orderCount, product, RECEIPT_PNG, receipt, setupShop, stock } from "./order-fixtures";
 import { getPaymentProof } from "@/lib/orders";
@@ -9,7 +9,7 @@ beforeEach(setupShop);
 
 test("places an order: totals, status, code, stock decrement, snapshots", () => {
   const r = placeOrder(order({ lines: [{ variantId: ids.v250, qty: 2 }] }), NOW);
-  expect(r).toEqual({ ok: true, code: "JC-2610-0001" });
+  expect(r).toMatchObject({ ok: true, code: "JC-2610-0001" });
   const o = getDb().prepare("SELECT * FROM orders").get() as Record<string, unknown>;
   expect(o).toMatchObject({ subtotal: 100000, shipping_fee: 16000, total: 116000, status: "new", gcash_ref: null, created_at: NOW.toISOString() });
   expect(stock(ids.v250)).toBe(3);
@@ -127,15 +127,15 @@ test("retrying with the same request id returns the first order instead of makin
   const input = order({ requestId: "req-abc-123", lines: [{ variantId: ids.v250, qty: 2 }] });
   const first = placeOrder(input, NOW);
   const again = placeOrder(input, NOW);
-  expect(first).toEqual({ ok: true, code: "JC-2610-0001" });
+  expect(first).toMatchObject({ ok: true, code: "JC-2610-0001" });
   expect(again).toEqual(first);
   expect([orderCount(), stock(ids.v250)]).toEqual([1, 3]);
-  expect(placeOrder(order({ requestId: "req-other" }), NOW)).toEqual({ ok: true, code: "JC-2610-0002" });
+  expect(placeOrder(order({ requestId: "req-other" }), NOW)).toMatchObject({ ok: true, code: "JC-2610-0002" });
 });
 
 test("pickup needs no address and never charges a delivery fee", () => {
   const r = placeOrder(order({ fulfilment: "pickup", province: "", city: "", address: "" }), NOW);
-  expect(r).toEqual({ ok: true, code: "JC-2610-0001" });
+  expect(r).toMatchObject({ ok: true, code: "JC-2610-0001" });
   expect(getDb().prepare("SELECT fulfilment, shipping_fee, subtotal, total, province, city, address FROM orders").get())
     .toEqual({ fulfilment: "pickup", shipping_fee: 0, subtotal: 50000, total: 50000, province: "", city: "", address: "" });
   expect(stock(ids.v250)).toBe(4);
@@ -179,7 +179,7 @@ test("a preferred date is required and must be at least 2 days out and within 60
   expect(placeOrder(order({ preferredDate: "2026-12-10" }), NOW)).toMatchObject({ ok: false, field: "preferredDate" });
   expect(placeOrder(order({ preferredDate: "next tuesday" }), NOW)).toMatchObject({ ok: false, field: "preferredDate" });
   expect(orderCount()).toBe(0);
-  expect(placeOrder(order({ preferredDate: "2026-10-06" }), NOW)).toEqual({ ok: true, code: "JC-2610-0001" });
+  expect(placeOrder(order({ preferredDate: "2026-10-06" }), NOW)).toMatchObject({ ok: true, code: "JC-2610-0001" });
   expect((getDb().prepare("SELECT preferred_date d FROM orders").get() as { d: string }).d).toBe("2026-10-06");
 });
 
@@ -208,4 +208,37 @@ test("an email address is required and kept trimmed", () => {
   expect(orderCount()).toBe(0);
   placeOrder(order({ email: "  Ana.Reyes@Example.com " }), NOW);
   expect((getDb().prepare("SELECT email FROM orders").get() as { email: string }).email).toBe("Ana.Reyes@Example.com");
+});
+
+test("an email that smuggles a second address or mailto tricks is refused", () => {
+  for (const email of ["me@x.com,other@y.com", "me@x.com;other@y.com", "Me <me@x.com>", "me?cc=o@y.com@x.com", "me@x", "me@x.com\nbcc: o@y.com"]) {
+    const r = placeOrder(order({ email }), NOW);
+    expect(r, email).toMatchObject({ ok: false, field: "email" });
+  }
+  for (const email of ["ana.reyes+shop@gmail.com", "a_b-c@sub.example.co.uk"]) expect(placeOrder(order({ email }), NOW).ok, email).toBe(true);
+});
+
+test("a customer can have only a few orders waiting for confirmation at a time", () => {
+  const ok = () => placeOrder(order({ lines: [{ variantId: ids.v250, qty: 1 }] }), NOW);
+  for (let i = 0; i < MAX_OPEN_ORDERS_PER_CUSTOMER; i++) expect(ok().ok).toBe(true);
+  const r = ok();
+  expect(r).toMatchObject({ ok: false, field: "mobile" });
+  expect((r as { error: string }).error).toContain(`${MAX_OPEN_ORDERS_PER_CUSTOMER} orders`);
+  // The same mobile with a different email is still the same customer; so is the same email with another mobile.
+  expect(placeOrder(order({ email: "other@example.com", lines: [{ variantId: ids.v250, qty: 1 }] }), NOW).ok).toBe(false);
+  expect(placeOrder(order({ mobile: "09998887777", lines: [{ variantId: ids.v250, qty: 1 }] }), NOW).ok).toBe(false);
+  // Someone else can still order, and once an order is confirmed it no longer counts.
+  expect(placeOrder(order({ mobile: "09998887777", email: "other@example.com", lines: [{ variantId: ids.v250, qty: 1 }] }), NOW).ok).toBe(true);
+  getDb().prepare("UPDATE orders SET status = 'confirmed' WHERE id = 1").run();
+  expect(ok().ok).toBe(true);
+});
+
+test("every order gets a secret view token, and a retried request returns the same one", () => {
+  const first = placeOrder(order({ requestId: "req-1" }), NOW);
+  expect(first).toMatchObject({ ok: true, token: expect.stringMatching(/^[A-Za-z0-9_-]{12}$/) });
+  const again = placeOrder(order({ requestId: "req-1" }), NOW);
+  expect(again).toEqual(first);
+  const second = placeOrder(order({ requestId: "req-2", mobile: "09998887777", email: "b@example.com" }), NOW);
+  expect((second as { token: string }).token).not.toBe((first as { token: string }).token);
+  expect(getOrderByCode("JC-2610-0001")?.viewToken).toBe((first as { token: string }).token);
 });

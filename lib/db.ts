@@ -25,7 +25,8 @@ const ordersTable = (name: string) => `CREATE TABLE IF NOT EXISTS ${name} (
   fulfilment TEXT NOT NULL DEFAULT 'delivery' CHECK (fulfilment IN ('delivery','pickup')),
   preferred_date TEXT,
   email TEXT NOT NULL DEFAULT '',
-  ready_emailed_at TEXT
+  ready_emailed_at TEXT,
+  view_token TEXT
 );`;
 
 const SCHEMA = `
@@ -153,6 +154,7 @@ function migrate(db: DatabaseSync) {
   if (!orderColumns.includes("preferred_date")) db.exec("ALTER TABLE orders ADD COLUMN preferred_date TEXT");
   if (!orderColumns.includes("email")) db.exec("ALTER TABLE orders ADD COLUMN email TEXT NOT NULL DEFAULT ''");
   if (!orderColumns.includes("ready_emailed_at")) db.exec("ALTER TABLE orders ADD COLUMN ready_emailed_at TEXT");
+  if (!orderColumns.includes("view_token")) db.exec("ALTER TABLE orders ADD COLUMN view_token TEXT");
   const variantColumns = db.prepare("PRAGMA table_info(variants)").all().map((c) => c.name);
   if (!variantColumns.includes("price")) db.exec("ALTER TABLE variants ADD COLUMN price INTEGER CHECK (price IS NULL OR price >= 0)");
   // The first costing release stored lines in recipe_items; recipe_lines replaced it.
@@ -195,16 +197,25 @@ function allowBankTransfer(db: DatabaseSync) {
   }
 }
 
+/** How many backups with the same label stay on disk. */
+export const KEEP_BACKUPS = 5;
+
 /**
  * Saves a full copy of the database next to it, named with the label and the time, and returns its path.
  * Returns null for an in-memory database (tests), where there is nothing to keep.
  */
-export function backupDatabase(label: string): string | null {
+export function backupDatabase(label: string, now: Date = new Date()): string | null {
   const file = dbPath();
   if (file === ":memory:") return null;
-  const stamp = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-  const backup = file.replace(/\.db$/, "") + `.${label}-${stamp}.db`;
+  const stamp = now.toISOString().replace(/[:.]/g, "-").slice(0, 23);
+  const base = file.replace(/\.db$/, "");
+  const backup = `${base}.${label}-${stamp}.db`;
   getDb().exec(`VACUUM INTO '${backup.replace(/'/g, "''")}'`);
+  // Backups are full copies, receipts included, and share the disk with the live database: keep only the newest few.
+  const dir = path.dirname(backup);
+  const prefix = `${path.basename(base)}.${label}-`;
+  const older = fs.readdirSync(dir).filter((f) => f.startsWith(prefix) && f.endsWith(".db")).sort().reverse().slice(KEEP_BACKUPS);
+  for (const f of older) fs.rmSync(path.join(dir, f), { force: true });
   return backup;
 }
 

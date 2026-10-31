@@ -61,3 +61,15 @@ test("an existing shop is upgraded to accept bank transfers without losing order
   getDb();
   expect(fs.readdirSync(dir).filter((f) => f.includes("before-bank-transfer"))).toHaveLength(1);
 });
+
+test("an existing shop gets the view_token column, and its old orders simply have none", () => {
+  dir = fs.mkdtempSync(path.join(os.tmpdir(), "jc-migrate-"));
+  const file = path.join(dir, "store.db");
+  oldShop(file);
+  process.env.DB_PATH = file;
+  closeDb();
+
+  const columns = (getDb().prepare("PRAGMA table_info(orders)").all() as { name: string }[]).map((c) => c.name);
+  expect(columns).toContain("view_token");
+  expect(getDb().prepare("SELECT view_token FROM orders").get()).toEqual({ view_token: null });
+});

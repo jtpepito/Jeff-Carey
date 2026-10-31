@@ -39,7 +39,7 @@ export function createSender(env: Env): EmailSender {
   const name = (env.SMTP_FROM_NAME?.trim() || "Jef&Carey").replace(/["\r\n]/g, "");
   return async (m) => {
     try {
-      await transport.sendMail({ from: { name, address: user }, to: m.to, subject: m.subject, text: m.text });
+      await transport.sendMail({ from: { name, address: user }, to: { name: "", address: m.to }, subject: m.subject, text: m.text });
       return { ok: true };
     } catch (err) {
       return { ok: false, reason: shortReason(err) };

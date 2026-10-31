@@ -2,16 +2,23 @@
 
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { createSession, passwordMatches, SESSION_COOKIE, SESSION_TTL_MS } from "@/lib/auth";
+import { createSession, lockoutMessage, passwordMatches, SESSION_COOKIE, SESSION_TTL_MS } from "@/lib/auth";
+import { clientIp } from "@/lib/client-ip";
+import { loginLimiter } from "@/lib/rate-limit";
 
 export async function login(_: unknown, formData: FormData): Promise<{ error: string }> {
   const password = process.env.ADMIN_PASSWORD;
   const input = String(formData.get("password") ?? "");
+  const ip = await clientIp();
+  const wait = loginLimiter.blockedFor(ip);
+  if (wait > 0) return { error: lockoutMessage(wait) };
   if (!(await passwordMatches(input, password))) {
+    loginLimiter.hit(ip);
     // Slows down password guessing a little.
     await new Promise((r) => setTimeout(r, 500));
     return { error: password ? "Wrong password." : "ADMIN_PASSWORD is not set on the server, so nobody can sign in." };
   }
+  loginLimiter.reset(ip);
   (await cookies()).set(SESSION_COOKIE, await createSession(password!), {
     httpOnly: true,
     sameSite: "lax",

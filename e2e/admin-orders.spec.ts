@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { earliestDate, RECEIPT, signIn } from "./admin";
+import { codeInUrl, earliestDate, RECEIPT, signIn } from "./admin";
 
 test("a storefront order appears as new with correct totals, then cancel restores stock", async ({ page }) => {
   await page.goto("/product/vanilla-cupcake"); // Single ₱100
@@ -14,7 +14,7 @@ test("a storefront order appears as new with correct totals, then cancel restore
   await page.getByLabel(/Reference number/).fill("9988776655443");
   await page.getByRole("button", { name: "Place order" }).click();
   await page.waitForURL(/\/thank-you\//);
-  const code = page.url().split("/").pop()!;
+  const code = codeInUrl(page);
 
   await signIn(page);
 

@@ -1,7 +1,10 @@
 "use server";
 
+import { clientIp } from "@/lib/client-ip";
 import { placeOrder, type OrderInput, type PlaceResult } from "@/lib/orders";
 import { MAX_PROOF_BYTES } from "@/lib/payment";
+import { checkoutLimiter } from "@/lib/rate-limit";
+import { shrinkProof } from "@/lib/shrink-proof";
 
 /**
  * Places the order. The form sends the order as JSON in "order" and the receipt file in "proof".
@@ -9,6 +12,8 @@ import { MAX_PROOF_BYTES } from "@/lib/payment";
  * and the receipt's type is judged from its contents.
  */
 export async function submitOrder(form: FormData): Promise<PlaceResult> {
+  if (!checkoutLimiter.hit(await clientIp()).ok)
+    return { ok: false, field: "network", error: "Too many orders from this connection in the past hour. Please try again later." };
   let input: Partial<OrderInput>;
   try {
     input = JSON.parse(String(form?.get("order") ?? ""));
@@ -21,7 +26,7 @@ export async function submitOrder(form: FormData): Promise<PlaceResult> {
   let proof: OrderInput["proof"];
   if (file instanceof File && file.size > 0) {
     if (file.size > MAX_PROOF_BYTES) return { ok: false, field: "proof", error: "That file is over 5 MB. Please attach a smaller screenshot or photo." };
-    proof = { name: file.name, data: new Uint8Array(await file.arrayBuffer()) };
+    proof = await shrinkProof({ name: file.name, data: new Uint8Array(await file.arrayBuffer()) });
   }
 
   return placeOrder({
