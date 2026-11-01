@@ -3,7 +3,7 @@ import { changeStatus, getOrderByCode, placeOrder, type OrderStatus } from "./or
 import { createProduct, listProducts, type ProductInput } from "./products";
 import { manilaDate } from "./time";
 import { pickupOnly } from "./fulfilment";
-import { applySuggestedPrice, saveComponent, saveIngredient, saveRecipe } from "./recipes";
+import { applySuggestedPrice, listComponents, listIngredients, saveComponent, saveIngredient, saveRecipe, type LineInput } from "./recipes";
 
 // Ingredient prices, recipes and packaging come from the owner's "Recipe Costing File.xlsx" (Oct 2026).
 // Photos are Unsplash stand-ins. Stock levels are placeholders.
@@ -51,6 +51,19 @@ const PRODUCTS: SeedProduct[] = [
     howToUse: "Best warm. 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature.",
     photos: ["/products/oreo.jpg", "/products/cover-1-v2.jpg"], variants: [["Box of 4", 20, "", 4, 40], ["Box of 9", 10, "", 9, 44], ["Tray of 36", 0, "", 36, 15]],
     recipe: { yield: 42, labour: 0, packaging: 40, notes: ROLL_NOTES, items: [["Cinnamon roll dough", 42], ["Choco filling", 42], ["Cream cheese topping", 42], ["Oreo crumbs", 210]] },
+  },
+  {
+    slug: "assorted-cinnamon-rolls", name: "Assorted Cinnamon Rolls", category: "Cinnamon Rolls", featured: false,
+    description: "Can't pick just one? A box of nine with our OG, Choco, Biscoff and Oreo rolls together.",
+    howToUse: "Best warm. 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature.",
+    photos: ["/products/assorted.jpg"], variants: [["Box of 9", 10, "", 9, 44]],
+    // Costed as nine rolls of each flavour (36 rolls, four boxes), so a box costs the average of the four
+    // flavours and is priced the same way they are. Biscoff and Oreo toppings are 5 g a roll, as in their recipes.
+    recipe: {
+      yield: 36, labour: 0, packaging: 44,
+      notes: "Nine rolls of each flavour, four boxes; a box costs the average of the four flavours. The mix in a box follows what is baking that day.",
+      items: [["Cinnamon roll dough", 36], ["Cream cheese topping", 36], ["OG filling", 18], ["Choco filling", 18], ["Chocolate topping", 9], ["Biscoff spread", 45], ["Oreo crumbs", 45]],
+    },
   },
   {
     slug: "vanilla-cupcake", name: "Vanilla Cupcake", category: "Cupcakes", featured: true,
@@ -207,6 +220,74 @@ export function seedIfEmpty(): { ok: true } | { ok: false; error: string } {
   return { ok: true };
 }
 
+/** Products added to the menu after the shop went live. A running shop gets each of them at server start, once. */
+const ADDED_SINCE_LAUNCH = ["assorted-cinnamon-rolls"];
+
+/**
+ * Creates one seed product with its recipe, then prices every option at the recipe's suggested price
+ * (cost × markup + packaging, how the costing file prices them) unless the owner set a price.
+ */
+function createSeedProduct(seed: SeedProduct, line: (item: [name: string, qty: number]) => LineInput): void {
+  const r = createProduct({
+    slug: seed.slug, name: seed.name, category: seed.category, description: seed.description, howToUse: seed.howToUse,
+    price: 0, compareAt: null, images: seed.photos.map((ph) => (ph.startsWith("/") ? ph : img(ph))), featured: seed.featured, active: true,
+    variants: seed.variants.map(([name, stock, sku]) => ({ name, stock, sku })),
+  });
+  if (!r.ok) throw new Error(`Seed product ${seed.slug}: ${r.error}`);
+  const p = listProducts().find((x) => x.slug === seed.slug)!;
+  const saved = saveRecipe(p.id, {
+    yield: seed.recipe.yield, labourMinutes: seed.recipe.labour, packagingCost: peso(seed.recipe.packaging), notes: seed.recipe.notes,
+    items: seed.recipe.items.map(line),
+    variants: p.variants.map((v) => {
+      const sv = seed.variants.find((x) => x[0] === v.name)!;
+      return { variantId: v.id, pieces: sv[3], packagingCost: peso(sv[4]), items: [] };
+    }),
+  });
+  if (!saved.ok) throw new Error(`Seed recipe ${seed.slug}: ${saved.error}`);
+  for (const v of p.variants) {
+    const set = seed.prices?.[v.name];
+    if (set !== undefined) {
+      getDb().prepare("UPDATE variants SET price = ? WHERE id = ?").run(peso(set), v.id);
+      continue;
+    }
+    const priced = applySuggestedPrice(p.id, v.id);
+    if (!priced.ok) throw new Error(`Seed price ${seed.slug} ${v.name}: ${priced.error}`);
+  }
+  // The product price is the cheapest option, for sorting and "from" labels.
+  const cheapest = Math.min(...p.variants.map((v) => (getDb().prepare("SELECT price FROM variants WHERE id = ?").get(v.id) as { price: number }).price));
+  getDb().prepare("UPDATE products SET price = ? WHERE id = ?").run(cheapest, p.id);
+}
+
+/**
+ * Adds the products in ADDED_SINCE_LAUNCH to a shop that was seeded before they existed. Each is added once;
+ * if the owner later removes one it stays removed. Returns how many were added.
+ */
+export function addNewSeedProducts(): number {
+  const db = getDb();
+  const existing = new Set(listProducts().map((p) => p.slug));
+  const ingredients = new Map(listIngredients().map((i) => [i.name, i.id]));
+  const components = new Map(listComponents().map((c) => [c.name, c.id]));
+  let added = 0;
+  for (const slug of ADDED_SINCE_LAUNCH) {
+    const key = `seed:added:${slug}`;
+    if (db.prepare("SELECT 1 FROM settings WHERE key = ?").get(key)) continue;
+    const seed = PRODUCTS.find((p) => p.slug === slug)!;
+    if (!existing.has(slug)) {
+      const missing = seed.recipe.items.map(([name]) => name).filter((name) => !ingredients.has(name) && !components.has(name));
+      if (missing.length) {
+        console.error(`[startup] ${slug} not added: the shop has no ${missing.join(", ")}`);
+        continue;
+      }
+      createSeedProduct(seed, ([name, qty]) =>
+        components.has(name) ? { componentId: components.get(name)!, qty } : { ingredientId: ingredients.get(name)!, qty },
+      );
+      added++;
+    }
+    db.prepare("INSERT INTO settings (key, value) VALUES (?, ?)").run(key, new Date().toISOString());
+  }
+  return added;
+}
+
 /** Wipes every table, then loads the real menu, its recipes and some sample orders. */
 export function seed(now: Date = new Date()): void {
   const db = getDb();
@@ -234,43 +315,9 @@ export function seed(now: Date = new Date()): void {
     componentId.set(c.name, r.id);
   }
 
-  for (const p of PRODUCTS) {
-    const r = createProduct({
-      slug: p.slug, name: p.name, category: p.category, description: p.description, howToUse: p.howToUse,
-      price: 0, compareAt: null, images: p.photos.map((ph) => (ph.startsWith("/") ? ph : img(ph))), featured: p.featured, active: true,
-      variants: p.variants.map(([name, stock, sku]) => ({ name, stock, sku })),
-    });
-    if (!r.ok) throw new Error(`Seed product ${p.slug}: ${r.error}`);
-  }
-
-  // Recipes, then prices: every option is priced at the recipe's suggested price (cost × markup + packaging),
-  // which is how the costing file prices them.
-  for (const p of listProducts()) {
-    const seed = PRODUCTS.find((s) => s.slug === p.slug)!;
-    const line = ([name, qty]: [string, number]) =>
-      componentId.has(name) ? { componentId: componentId.get(name)!, qty } : { ingredientId: need(name), qty };
-    const saved = saveRecipe(p.id, {
-      yield: seed.recipe.yield, labourMinutes: seed.recipe.labour, packagingCost: peso(seed.recipe.packaging), notes: seed.recipe.notes,
-      items: seed.recipe.items.map(line),
-      variants: p.variants.map((v) => {
-        const sv = seed.variants.find((x) => x[0] === v.name)!;
-        return { variantId: v.id, pieces: sv[3], packagingCost: peso(sv[4]), items: [] };
-      }),
-    });
-    if (!saved.ok) throw new Error(`Seed recipe ${p.slug}: ${saved.error}`);
-    for (const v of p.variants) {
-      const set = seed.prices?.[v.name];
-      if (set !== undefined) {
-        getDb().prepare("UPDATE variants SET price = ? WHERE id = ?").run(peso(set), v.id);
-        continue;
-      }
-      const priced = applySuggestedPrice(p.id, v.id);
-      if (!priced.ok) throw new Error(`Seed price ${p.slug} ${v.name}: ${priced.error}`);
-    }
-    // The product price is the cheapest option, for sorting and "from" labels.
-    const cheapest = Math.min(...p.variants.map((v) => (getDb().prepare("SELECT price FROM variants WHERE id = ?").get(v.id) as { price: number }).price));
-    getDb().prepare("UPDATE products SET price = ? WHERE id = ?").run(cheapest, p.id);
-  }
+  const line = ([name, qty]: [string, number]): LineInput =>
+    componentId.has(name) ? { componentId: componentId.get(name)!, qty } : { ingredientId: need(name), qty };
+  for (const p of PRODUCTS) createSeedProduct(p, line);
 
   const variantId = new Map<string, number>();
   for (const p of listProducts()) for (const v of p.variants) variantId.set(`${p.slug}|${v.name}`, v.id);

@@ -1,4 +1,4 @@
-import { renameRetiredPhotos, replaceStandInPhotos } from "./lib/seed-data";
+import { addNewSeedProducts, renameRetiredPhotos, replaceStandInPhotos } from "./lib/seed-data";
 
 /** Server-start housekeeping that needs Node (the database). Never lets a failure stop the server. */
 export function onServerStart() {
@@ -7,7 +7,9 @@ export function onServerStart() {
   try {
     const changed = renameRetiredPhotos() + replaceStandInPhotos();
     if (changed) console.log(`[startup] put the shop's own photos on ${changed} ${changed === 1 ? "product" : "products"}`);
+    const added = addNewSeedProducts();
+    if (added) console.log(`[startup] added ${added} new ${added === 1 ? "product" : "products"} to the menu`);
   } catch (e) {
-    console.error("[startup] photo update skipped:", e);
+    console.error("[startup] menu update skipped:", e);
   }
 }

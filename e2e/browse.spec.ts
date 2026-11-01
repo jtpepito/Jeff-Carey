@@ -28,10 +28,10 @@ test("shop filters by category, searches and sorts by price", async ({ page }) =
 
 test("choosing a category in the filter reloads the grid", async ({ page }) => {
   await page.goto("/shop");
-  await expect(page.getByTestId("product-card")).toHaveCount(5);
+  await expect(page.getByTestId("product-card")).toHaveCount(6);
   await page.getByLabel("Category").selectOption("Cinnamon Rolls");
   await expect(page).toHaveURL(/category=Cinnamon/);
-  await expect(page.getByTestId("product-card")).toHaveCount(4);
+  await expect(page.getByTestId("product-card")).toHaveCount(5);
 });
 
 test("product page: compare-at, sold-out variant disabled, related products", async ({ page }) => {

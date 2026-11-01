@@ -2,9 +2,9 @@ import { beforeEach, expect, test } from "vitest";
 import { getDb } from "@/lib/db";
 import { listOrders } from "@/lib/orders";
 import { priceRange } from "@/lib/pricing";
-import { listCategories, listProducts } from "@/lib/products";
+import { listCategories, listProducts, removeProduct } from "@/lib/products";
 import { getRecipe, listComponents, listIngredients, productCosts } from "@/lib/recipes";
-import { applySeedPhotos, renameRetiredPhotos, replaceStandInPhotos, seed, seedIfEmpty } from "@/lib/seed-data";
+import { addNewSeedProducts, applySeedPhotos, renameRetiredPhotos, replaceStandInPhotos, seed, seedIfEmpty } from "@/lib/seed-data";
 import { freshDb } from "./helpers";
 
 beforeEach(freshDb);
@@ -12,7 +12,7 @@ beforeEach(freshDb);
 test("seed loads the real menu, its recipes and 15 mixed-status orders", () => {
   seed(new Date("2026-10-04T03:00:00Z"));
   const products = listProducts();
-  expect(products).toHaveLength(5);
+  expect(products).toHaveLength(6);
   expect(listCategories()).toEqual(["Cinnamon Rolls", "Cupcakes"]);
   expect(products.filter((p) => p.featured)).toHaveLength(3);
   expect(listIngredients().length).toBeGreaterThanOrEqual(30);
@@ -27,7 +27,7 @@ test("seed loads the real menu, its recipes and 15 mixed-status orders", () => {
   expect((getDb().prepare("SELECT MIN(stock) m FROM variants").get() as { m: number }).m).toBe(0);
 
   // Every product has a recipe and every option is priced at its suggested price.
-  expect(productCosts().size).toBe(5);
+  expect(productCosts().size).toBe(6);
   for (const p of products) {
     const r = getRecipe(p.id)!;
     for (const v of r.variants) expect(v.price === v.suggestedPrice || p.slug === "vanilla-cupcake").toBe(true);
@@ -53,16 +53,16 @@ test("the OG cinnamon roll costs what the costing file says", () => {
 test("seeding twice gives the same counts", () => {
   seed();
   seed();
-  expect(listProducts()).toHaveLength(5);
+  expect(listProducts()).toHaveLength(6);
   expect(listOrders()).toHaveLength(15);
   expect(listComponents()).toHaveLength(5);
 });
 
 test("seedIfEmpty loads the menu only into an empty shop", () => {
   expect(seedIfEmpty()).toEqual({ ok: true });
-  expect(listProducts()).toHaveLength(5);
+  expect(listProducts()).toHaveLength(6);
   expect(seedIfEmpty()).toMatchObject({ ok: false });
-  expect(listProducts()).toHaveLength(5);
+  expect(listProducts()).toHaveLength(6);
 });
 
 test("applySeedPhotos swaps stand-in photos for the ones shipped with the app, by slug", () => {
@@ -140,4 +140,34 @@ test("a fresh seed already uses the cleaner tray covers", () => {
   expect(all).not.toContain("/products/cover-2.jpg");
   expect(all).toContain("/products/cover-1-v2.jpg");
   expect(all).toContain("/products/cover-2-v2.jpg");
+});
+
+const box9 = (slug: string) => listProducts().find((x) => x.slug === slug)!.variants.find((v) => v.name === "Box of 9")!.price ?? 0;
+
+test("the assorted box comes only as a box of nine, priced as the average of the four flavours", () => {
+  seed();
+  const p = listProducts().find((x) => x.slug === "assorted-cinnamon-rolls")!;
+  expect(p.variants.map((v) => v.name)).toEqual(["Box of 9"]);
+  expect(p.images).toEqual(["/products/assorted.jpg"]);
+  const average = (box9("og-cinnamon-rolls") + box9("choco-cinnamon-rolls") + box9("biscoff-cinnamon-rolls") + box9("oreo-cinnamon-rolls")) / 4;
+  expect(Math.abs(box9("assorted-cinnamon-rolls") - average)).toBeLessThanOrEqual(100); // within a peso, from rounding
+  expect(getRecipe(p.id)!.variants[0].pieces).toBe(9);
+});
+
+test("addNewSeedProducts gives a shop seeded before the assorted box existed that product, once", () => {
+  seed();
+  const before = listProducts().find((x) => x.slug === "assorted-cinnamon-rolls")!;
+  expect(removeProduct(before.id)).toBe("deleted");
+  getDb().exec("DELETE FROM settings WHERE key LIKE 'seed:added:%'");
+
+  expect(addNewSeedProducts()).toBe(1);
+  const p = listProducts().find((x) => x.slug === "assorted-cinnamon-rolls")!;
+  expect(box9("assorted-cinnamon-rolls")).toBe(before.variants[0].price);
+  expect(getRecipe(p.id)!.variants[0].pieces).toBe(9);
+  expect(addNewSeedProducts()).toBe(0);
+
+  // Once added, the owner may remove it for good.
+  expect(removeProduct(p.id)).toBe("deleted");
+  expect(addNewSeedProducts()).toBe(0);
+  expect(listProducts().some((x) => x.slug === "assorted-cinnamon-rolls")).toBe(false);
 });
