@@ -19,7 +19,6 @@ type SeedProduct = Omit<ProductInput, "active" | "price" | "compareAt" | "images
   prices?: Record<string, number>;
 };
 
-const ROLL_PHOTOS = ["1509365465985-25d11c17e812", "1483695028939-5bb13f8648b0"]; // Unsplash stand-ins (Oreo only)
 const ROLL_NOTES = "Dough proofs overnight. One batch is 42 rolls. Box of 4 and Box of 9 use the gold PF boxes with sticker and ribbon; the tray uses the WB130 foil pan.";
 // Packaging per unit sold, from the costing file: 7x7x4 box ₱28, 10x10x4 box ₱32, foil pan ₱13, sticker ₱2, ribbon ₱10.
 const ROLL_VARIANTS: SeedVariant[] = [["Box of 4", 20, "", 4, 40], ["Box of 9", 10, "", 9, 44], ["Tray of 36", 3, "", 36, 15]];
@@ -50,7 +49,7 @@ const PRODUCTS: SeedProduct[] = [
     slug: "oreo-cinnamon-rolls", name: "Oreo Cinnamon Rolls", category: "Cinnamon Rolls", featured: false,
     description: "Cocoa in the swirl, cream cheese frosting, and Oreo crumbs over the top.",
     howToUse: "Best warm. 15 seconds in the microwave, or 5 minutes in a 160°C oven. Keeps 3 days at room temperature.",
-    photos: ROLL_PHOTOS, variants: [["Box of 4", 20, "", 4, 40], ["Box of 9", 10, "", 9, 44], ["Tray of 36", 0, "", 36, 15]],
+    photos: ["/products/oreo.jpg", "/products/cover-1-v2.jpg"], variants: [["Box of 4", 20, "", 4, 40], ["Box of 9", 10, "", 9, 44], ["Tray of 36", 0, "", 36, 15]],
     recipe: { yield: 42, labour: 0, packaging: 40, notes: ROLL_NOTES, items: [["Cinnamon roll dough", 42], ["Choco filling", 42], ["Cream cheese topping", 42], ["Oreo crumbs", 210]] },
   },
   {

@@ -81,14 +81,14 @@ test("replaceStandInPhotos gives rolls still on stock photos the owner's photos,
   set("og-cinnamon-rolls", stock);
   set("biscoff-cinnamon-rolls", stock);
   set("choco-cinnamon-rolls", JSON.stringify(["https://example.com/my-own-photo.jpg"]));
+  set("oreo-cinnamon-rolls", JSON.stringify(["https://images.unsplash.com/photo-1509365465985-25d11c17e812?w=1200", "https://images.unsplash.com/photo-1483695028939-5bb13f8648b0?w=1200"]));
   const images = (slug: string) => listProducts().find((p) => p.slug === slug)!.images;
-  const oreoBefore = images("oreo-cinnamon-rolls");
 
-  expect(replaceStandInPhotos()).toBe(2);
+  expect(replaceStandInPhotos()).toBe(3);
   expect(images("og-cinnamon-rolls")).toEqual(["/products/original.jpg", "/products/cover-1-v2.jpg"]);
   expect(images("biscoff-cinnamon-rolls")).toEqual(["/products/biscoff-2.jpg", "/products/cover-2-v2.jpg"]);
   expect(images("choco-cinnamon-rolls")).toEqual(["https://example.com/my-own-photo.jpg"]); // chosen in admin: kept
-  expect(images("oreo-cinnamon-rolls")).toEqual(oreoBefore); // no photo of our own yet
+  expect(images("oreo-cinnamon-rolls")).toEqual(["/products/oreo.jpg", "/products/cover-1-v2.jpg"]);
   expect(replaceStandInPhotos()).toBe(0);
 });
 
